@@ -1,0 +1,17 @@
+{
+  "version": 2,
+  "sessions": {
+    "49366b4460584a0e9abbb3b5490e5b78": [
+      {
+        "expertId": "UserExperienceArchitect",
+        "name": "体验达",
+        "profession": "用户体验架构师",
+        "avatarUrl": "https://acc-1258344699.cos.accelerate.myqcloud.com/workbuddy/experts/avatars/01-Design/UserExperienceArchitect/UserExperienceArchitect.png",
+        "promptUrl": "https://acc-1258344699.cos.accelerate.myqcloud.com/workbuddy/experts/experts/01-Design/UserExperienceArchitect/UserExperienceArchitect_zh.md",
+        "usedAt": 1777738769516,
+        "industryId": "01-Design"
+      }
+    ]
+  },
+  "lastUpdated": 1777738769517
+}

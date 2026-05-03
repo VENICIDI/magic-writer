@@ -1,0 +1,30 @@
+appId: com.magic-writer.desktop
+productName: Magic Writer
+directories:
+  buildResources: resources
+  output: release
+files:
+  - '!**/.vscode/*'
+  - '!src/*'
+  - '!electron.vite.config.*'
+  - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
+  - '!{.eslintignore,.eslintrc.cjs,.prettierignore,.prettierrc.yaml}'
+mac:
+  artifactName: ${name}-${version}-${arch}.${ext}
+  target:
+    - target: dmg
+      arch:
+        - x64
+        - arm64
+win:
+  artifactName: ${name}-${version}-setup.${ext}
+  target:
+    - target: nsis
+      arch:
+        - x64
+linux:
+  artifactName: ${name}-${version}-${arch}.${ext}
+  target:
+    - target: AppImage
+      arch:
+        - x64

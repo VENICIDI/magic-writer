@@ -1,0 +1,103 @@
+@import "tailwindcss";
+
+/* ===== 深色主题（默认） ===== */
+@theme {
+  --color-surface-900: #111113;
+  --color-surface-800: #18181b;
+  --color-surface-700: #222225;
+  --color-surface-600: #303033;
+  --color-surface-500: #3f3f44;
+  --color-accent: #7c3aed;
+  --color-accent-light: #a78bfa;
+  --font-sans: 'Inter', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+}
+
+:root {
+  --th-text-primary: #e4e4e7;
+}
+
+/* ===== 浅色主题覆盖 ===== */
+[data-theme="light"] {
+  --color-surface-900: #ffffff;
+  --color-surface-800: #f4f4f5;
+  --color-surface-700: #ececee;
+  --color-surface-600: #d4d4d8;
+  --color-surface-500: #a1a1aa;
+  --color-accent: #3b5eeb;
+  --color-accent-light: #2f4fd6;
+  --th-text-primary: #18181b;
+}
+
+body {
+  margin: 0;
+  overflow: hidden;
+  background-color: var(--color-surface-900);
+  color: var(--th-text-primary);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* 浅色模式下覆盖 Tailwind 文字颜色 */
+[data-theme="light"] .text-gray-200 { color: #18181b; }
+[data-theme="light"] .text-gray-300 { color: #1f1f23; }
+[data-theme="light"] .text-gray-400 { color: #3f3f46; }
+[data-theme="light"] .text-gray-500 { color: #52525b; }
+[data-theme="light"] .text-gray-600 { color: #71717a; }
+[data-theme="light"] .text-green-500 { color: #16a34a; }
+[data-theme="light"] .text-amber-400 { color: #d97706; }
+[data-theme="light"] .text-red-400 { color: #dc2626; }
+
+.titlebar-drag {
+  -webkit-app-region: drag;
+}
+
+.titlebar-no-drag {
+  -webkit-app-region: no-drag;
+}
+
+.input-field {
+  width: 100%;
+  border-radius: 0.5rem;
+  background-color: var(--color-surface-700);
+  border: 1px solid var(--color-surface-600);
+  padding: 0.5rem 0.75rem;
+  font-size: 0.75rem;
+  color: var(--th-text-primary);
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.input-field:focus {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-accent) 30%, transparent);
+}
+
+/* 滚动条美化 */
+::-webkit-scrollbar {
+  width: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-surface-500);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-surface-600);
+}
+
+/* ===== accent 透明度 utilities（响应主题切换） ===== */
+.bg-accent-10 {
+  background-color: color-mix(in srgb, var(--color-accent) 10%, transparent);
+}
+.bg-accent-15 {
+  background-color: color-mix(in srgb, var(--color-accent) 15%, transparent);
+}
+.bg-accent-20 {
+  background-color: color-mix(in srgb, var(--color-accent) 20%, transparent);
+}
+.hover\:bg-accent-80:hover {
+  background-color: color-mix(in srgb, var(--color-accent) 80%, transparent);
+}
