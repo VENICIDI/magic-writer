@@ -22,7 +22,7 @@ export function LibraryView({ onEnterProject }: LibraryViewProps): React.ReactEl
 
   async function handleCreate(data: { title: string; genre: string; logline: string }): Promise<void> {
     const newProject = await window.api.project.create(data)
-    await window.api.volume.create({ projectId: newProject.id, title: '卷一' })
+    await window.api.volume.create({ projectId: newProject.id, title: '第一卷' })
     const { projects: all } = await window.api.project.list()
     useProjectStore.setState({ projects: all })
     await openProject(newProject.id)
@@ -75,7 +75,7 @@ export function LibraryView({ onEnterProject }: LibraryViewProps): React.ReactEl
                     {p.title}
                   </div>
                   {p.genre && (
-                    <div className="mt-2 inline-block rounded-full bg-accent-15 px-2 py-0.5 text-[13px] text-accent-light">
+                    <div className="mt-2 inline-block rounded-full bg-accent-15 px-2 py-0.5 text-sm text-accent-light">
                       {p.genre}
                     </div>
                   )}
@@ -84,11 +84,11 @@ export function LibraryView({ onEnterProject }: LibraryViewProps): React.ReactEl
 
               {/* 信息区域 */}
               <div className="px-3 py-2.5">
-                <div className="truncate text-[13px] font-medium text-gray-300">
+                <div className="truncate text-sm font-medium text-gray-300">
                   {p.title}
                 </div>
                 {p.logline && (
-                  <div className="mt-0.5 truncate text-[13px] text-gray-500">
+                  <div className="mt-0.5 truncate text-sm text-gray-500">
                     {p.logline}
                   </div>
                 )}
@@ -116,7 +116,7 @@ export function LibraryView({ onEnterProject }: LibraryViewProps): React.ReactEl
               <div className="flex justify-center text-gray-500 mb-1.5">
                 <IconPlus size={24} />
               </div>
-              <div className="text-[13px] text-gray-500">新建作品</div>
+              <div className="text-sm text-gray-500">新建作品</div>
             </div>
           </div>
         </div>

@@ -13,6 +13,8 @@ import {
   deleteChapter,
   deleteProject,
   deleteVolume,
+  renameChapter,
+  renameVolume,
   getChapterContent,
   getProject,
   listChapters,
@@ -56,6 +58,9 @@ export function registerIpcHandlers(): void {
     deleteVolume(id)
     return { ok: true }
   })
+  ipcMain.handle('volume:rename', (_e, req: { id: string; title: string }) => {
+    return renameVolume(req.id, req.title)
+  })
 
   // ---------- 章节 ----------
   ipcMain.handle(IPC.ChapterList, (_e, projectId: string) => {
@@ -79,6 +84,9 @@ export function registerIpcHandlers(): void {
   ipcMain.handle('chapter:delete', (_e, id: string) => {
     deleteChapter(id)
     return { ok: true }
+  })
+  ipcMain.handle('chapter:rename', (_e, req: { id: string; title: string }) => {
+    return renameChapter(req.id, req.title)
   })
 
   // ---------- 全文搜索 ----------

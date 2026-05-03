@@ -115,7 +115,7 @@ export function OutlinePanel(): React.ReactElement {
                     {act.volumes.map((vol, vi) => (
                       <div key={vi} className="ml-2">
                         <button
-                          className="w-full text-left text-[13px] font-medium text-gray-300 hover:text-accent-light py-0.5"
+                          className="w-full text-left text-sm font-medium text-gray-300 hover:text-accent-light py-0.5"
                           onClick={() => toggleCollapse(`vol-${ai}-${vi}`)}
                         >
                           {collapsed[`vol-${ai}-${vi}`] ? '▶' : '▼'} {vol.title}
@@ -127,10 +127,10 @@ export function OutlinePanel(): React.ReactElement {
                                 key={ci}
                                 className="rounded bg-surface-800 px-2 py-1.5"
                               >
-                                <div className="text-[13px] text-gray-300 font-medium">
+                                <div className="text-sm text-gray-300 font-medium">
                                   {ch.title}
                                 </div>
-                                <div className="text-[12px] text-gray-500 mt-0.5 leading-4">
+                                <div className="text-sm text-gray-500 mt-0.5 leading-4">
                                   {ch.summary}
                                 </div>
                               </div>

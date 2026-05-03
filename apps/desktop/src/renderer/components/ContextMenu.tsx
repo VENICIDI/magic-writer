@@ -47,7 +47,7 @@ export function ContextMenu({ x, y, items, onClose }: ContextMenuProps): React.R
         {items.map((item, i) => (
           <button
             key={i}
-            className={`flex w-full items-center px-3 py-1.5 text-left text-[13px] transition-colors ${
+            className={`flex w-full items-center px-3 py-1.5 text-left text-sm transition-colors ${
               item.danger
                 ? 'text-red-400 hover:bg-red-500/10'
                 : 'text-gray-300 hover:bg-surface-600'

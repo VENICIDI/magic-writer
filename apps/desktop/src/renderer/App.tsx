@@ -61,13 +61,13 @@ function App(): React.ReactElement {
   return (
     <div className="flex h-screen flex-col bg-surface-900 text-gray-200">
       {/* ===== 顶部 Tab Bar（模仿参考图：作品库 tab + 当前作品 tab）===== */}
-      <div className="titlebar-drag flex h-9 shrink-0 items-center border-b border-surface-600 bg-surface-800">
+      <div className="titlebar-drag flex h-10 shrink-0 items-center border-b border-surface-600 bg-surface-800">
         {/* macOS traffic lights 占位 */}
         <div className="w-[72px] shrink-0" />
 
         {/* Tab: 作品库 */}
         <button
-          className={`titlebar-no-drag flex items-center gap-1.5 px-3 h-full text-[13px] border-r border-surface-600 transition-colors ${
+          className={`titlebar-no-drag flex items-center gap-1.5 px-3 h-full text-sm border-r border-surface-600 transition-colors ${
             activePage === 'library'
               ? 'bg-surface-900 text-gray-200'
               : 'text-gray-500 hover:text-gray-300'
@@ -83,7 +83,7 @@ function App(): React.ReactElement {
         {/* Tab: 当前作品（仅有打开项目时显示） */}
         {currentProject && (
           <button
-            className={`titlebar-no-drag flex items-center gap-1.5 px-3 h-full text-[13px] border-r border-surface-600 transition-colors ${
+            className={`titlebar-no-drag flex items-center gap-1.5 px-3 h-full text-sm border-r border-surface-600 transition-colors ${
               activePage === 'workspace'
                 ? 'bg-surface-900 text-gray-200'
                 : 'text-gray-500 hover:text-gray-300'

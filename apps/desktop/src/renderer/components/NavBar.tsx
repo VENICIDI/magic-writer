@@ -67,7 +67,7 @@ export function NavBar({ activePage, onNavigate, onOpenSettings, projectTitle }:
         {items.map((item) => (
           <button
             key={item.id}
-            className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-[12px] transition-colors ${
+            className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm transition-colors ${
               activePage === item.id
                 ? 'bg-accent-15 text-accent-light font-medium'
                 : 'text-gray-400 hover:bg-surface-700 hover:text-gray-200'
@@ -84,7 +84,7 @@ export function NavBar({ activePage, onNavigate, onOpenSettings, projectTitle }:
           <>
             <div className="h-px bg-surface-600 my-2" />
             <button
-              className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-[12px] transition-colors ${
+              className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm transition-colors ${
                 activePage === 'workspace'
                   ? 'bg-accent-15 text-accent-light font-medium'
                   : 'text-gray-400 hover:bg-surface-700 hover:text-gray-200'
@@ -101,7 +101,7 @@ export function NavBar({ activePage, onNavigate, onOpenSettings, projectTitle }:
 
         {/* 更多菜单项（占位，后续可扩展） */}
         <button
-          className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-[12px] text-gray-500 transition-colors hover:bg-surface-700 hover:text-gray-300"
+          className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm text-gray-500 transition-colors hover:bg-surface-700 hover:text-gray-300"
           disabled
         >
           <IconBarChart size={16} />
@@ -113,7 +113,7 @@ export function NavBar({ activePage, onNavigate, onOpenSettings, projectTitle }:
       {/* ===== 底部设置 ===== */}
       <div className="border-t border-surface-600 px-2 py-2">
         <button
-          className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-[12px] text-gray-400 transition-colors hover:bg-surface-700 hover:text-gray-200"
+          className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm text-gray-400 transition-colors hover:bg-surface-700 hover:text-gray-200"
           onClick={onOpenSettings}
         >
           <IconSettings size={16} />

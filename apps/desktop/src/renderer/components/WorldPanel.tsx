@@ -124,13 +124,13 @@ export function WorldPanel(): React.ReactElement {
               </div>
               <div className="flex gap-1">
                 <button
-                  className="rounded px-1.5 py-0.5 text-[12px] text-gray-400 hover:bg-surface-500"
+                  className="rounded px-1.5 py-0.5 text-sm text-gray-400 hover:bg-surface-500"
                   onClick={() => handleEdit(char)}
                 >
                   编辑
                 </button>
                 <button
-                  className="rounded px-1.5 py-0.5 text-[12px] text-red-400 hover:bg-surface-500"
+                  className="rounded px-1.5 py-0.5 text-sm text-red-400 hover:bg-surface-500"
                   onClick={() => handleDelete(char.id)}
                 >
                   删除
@@ -146,7 +146,7 @@ export function WorldPanel(): React.ReactElement {
             {char.abilities.length > 0 && (
               <div className="mt-1 flex flex-wrap gap-1">
                 {char.abilities.map((a, i) => (
-                  <span key={i} className="rounded bg-surface-500 px-1.5 py-0.5 text-[12px] text-gray-400">
+                  <span key={i} className="rounded bg-surface-500 px-1.5 py-0.5 text-sm text-gray-400">
                     {a}
                   </span>
                 ))}

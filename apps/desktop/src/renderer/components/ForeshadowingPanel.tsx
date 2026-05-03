@@ -140,7 +140,7 @@ export function ForeshadowingPanel(): React.ReactElement {
 function Group({ title, color, children }: { title: string; color?: string; children: React.ReactNode }): React.ReactElement {
   return (
     <div>
-      <div className={`text-[13px] font-medium mb-1 ${color ?? 'text-gray-400'}`}>{title}</div>
+      <div className={`text-sm font-medium mb-1 ${color ?? 'text-gray-400'}`}>{title}</div>
       <div className="space-y-1">{children}</div>
     </div>
   )
@@ -157,17 +157,17 @@ function ForeshadowingItem({
 }): React.ReactElement {
   return (
     <div className="rounded border border-surface-600 bg-surface-700 px-2.5 py-2">
-      <div className="text-[13px] text-gray-300 leading-4">{item.description}</div>
+      <div className="text-sm text-gray-300 leading-4">{item.description}</div>
       {item.status === 'pending' && (
         <div className="flex gap-2 mt-1.5">
           <button
-            className="text-[13px] text-green-400 hover:underline"
+            className="text-sm text-green-400 hover:underline"
             onClick={onResolve}
           >
             ✓ 标记回收
           </button>
           <button
-            className="text-[13px] text-gray-500 hover:underline"
+            className="text-sm text-gray-500 hover:underline"
             onClick={onAbandon}
           >
             ✗ 废弃

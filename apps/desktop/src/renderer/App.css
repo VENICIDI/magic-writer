@@ -34,7 +34,7 @@ body {
   background-color: var(--color-surface-900);
   color: var(--th-text-primary);
   font-family: var(--font-sans);
-  font-size: 14px;
+  font-size: 15px;
   -webkit-font-smoothing: antialiased;
 }
 

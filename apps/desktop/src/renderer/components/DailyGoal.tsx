@@ -38,7 +38,7 @@ export function DailyGoal(): React.ReactElement {
             style={{ width: `${percentage}%` }}
           />
         </div>
-        <span className="text-[12px] text-gray-500">
+        <span className="text-sm text-gray-500">
           {dailyWordCount.toLocaleString()} / {dailyGoal.toLocaleString()}
         </span>
       </div>

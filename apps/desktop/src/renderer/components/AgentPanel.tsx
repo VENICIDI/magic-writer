@@ -92,7 +92,7 @@ export function AgentPanel(): React.ReactElement {
                 : 'bg-surface-700 text-gray-300'
             }`}
           >
-            <div className="mb-1 text-[12px] uppercase tracking-wide text-gray-500">
+            <div className="mb-1 text-sm uppercase tracking-wide text-gray-500">
               {t.role === 'user' ? '我' : t.agentType ?? 'assistant'}
             </div>
             <div className="whitespace-pre-wrap">
@@ -128,7 +128,7 @@ export function AgentPanel(): React.ReactElement {
           disabled={running}
         />
         <button
-          className="mt-2 w-full rounded-lg bg-accent py-1.5 text-sm text-white transition-colors hover:bg-accent-80 disabled:opacity-50"
+          className="mt-2 w-full rounded-lg bg-accent py-1.5 text-sm font-medium text-white transition-colors hover:bg-accent-80 disabled:cursor-not-allowed disabled:bg-surface-600 disabled:text-gray-400"
           onClick={onSend}
           disabled={running || !currentChapter}
         >

@@ -32,7 +32,9 @@ const api = {
     create: (req: { projectId: string; title: string }): Promise<Volume> =>
       ipcRenderer.invoke('volume:create', req),
     delete: (id: string): Promise<{ ok: boolean }> =>
-      ipcRenderer.invoke('volume:delete', id)
+      ipcRenderer.invoke('volume:delete', id),
+    rename: (req: { id: string; title: string }): Promise<Volume | null> =>
+      ipcRenderer.invoke('volume:rename', req)
   },
   chapter: {
     list: (projectId: string): Promise<{ volumes: Volume[]; chapters: Chapter[] }> =>
@@ -50,6 +52,8 @@ const api = {
     }): Promise<Chapter> => ipcRenderer.invoke(IPC.ChapterCreate, req),
     delete: (id: string): Promise<{ ok: boolean }> =>
       ipcRenderer.invoke('chapter:delete', id),
+    rename: (req: { id: string; title: string }): Promise<Chapter | null> =>
+      ipcRenderer.invoke('chapter:rename', req),
     search: (req: { projectId: string; query: string }): Promise<Array<{ chapterId: string; snippet: string }>> =>
       ipcRenderer.invoke('chapter:search', req)
   },

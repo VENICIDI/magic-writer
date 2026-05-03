@@ -92,6 +92,14 @@ export function createVolume(projectId: string, title: string): Volume {
   return { id, projectId, title, order: maxOrder + 1 }
 }
 
+export function renameVolume(id: string, title: string): Volume | null {
+  const db = getDB()
+  const row = db.prepare('SELECT * FROM volumes WHERE id = ?').get(id) as any
+  if (!row) return null
+  db.prepare('UPDATE volumes SET title = ? WHERE id = ?').run(title, id)
+  return { ...rowToVolume(row), title }
+}
+
 export function deleteVolume(id: string): void {
   const db = getDB()
   // 级联删除卷下的章节（SQLite ON DELETE CASCADE 已设置，但章节 md 文件也要清理）
@@ -166,7 +174,7 @@ export function createChapter(input: {
   const db = getDB()
   const now = Date.now()
   const id = `c-${now}`
-  const filePath = `${id}.md`
+  const filePath = `${id}.txt`
   const maxOrder = (db.prepare('SELECT MAX(sort_order) as m FROM chapters WHERE volume_id = ?').get(input.volumeId) as any)?.m ?? 0
   const order = maxOrder + 1
 
@@ -176,7 +184,7 @@ export function createChapter(input: {
   `).run(id, input.projectId, input.volumeId, input.title, filePath, order, now)
 
   const fullPath = join(getDataDir(), 'chapters', filePath)
-  writeFileSync(fullPath, `# ${input.title}\n\n`, 'utf-8')
+  writeFileSync(fullPath, '', 'utf-8')
 
   return {
     id,
@@ -190,6 +198,14 @@ export function createChapter(input: {
     order,
     updatedAt: now
   }
+}
+
+export function renameChapter(id: string, title: string): Chapter | null {
+  const db = getDB()
+  const row = db.prepare('SELECT * FROM chapters WHERE id = ?').get(id) as any
+  if (!row) return null
+  db.prepare('UPDATE chapters SET title = ? WHERE id = ?').run(title, id)
+  return { ...rowToChapter(row), title }
 }
 
 export function deleteChapter(id: string): void {
@@ -404,16 +420,14 @@ export function ensureSeedData(): void {
 
   // 创建章节
   const chapters = [
-    { id: 'c1', volumeId: 'v1', title: '第一章 穿越', file: 'c1.md', outline: '主角穿越到修仙界，拥有前世记忆。', order: 1 },
-    { id: 'c2', volumeId: 'v1', title: '第二章 觉醒', file: 'c2.md', outline: '主角觉醒灵根，被青云宗收为外门弟子。', order: 2 },
-    { id: 'c3', volumeId: 'v1', title: '第三章 初修', file: 'c3.md', outline: '主角第一次尝试练气，展露不凡天资。', order: 3 },
-    { id: 'c4', volumeId: 'v2', title: '第四章 下山', file: 'c4.md', outline: '主角奉命下山历练。', order: 4 }
+    { id: 'c1', volumeId: 'v1', title: '第一章 穿越', file: 'c1.txt', outline: '主角穿越到修仙界，拥有前世记忆。', order: 1 },
+    { id: 'c2', volumeId: 'v1', title: '第二章 觉醒', file: 'c2.txt', outline: '主角觉醒灵根，被青云宗收为外门弟子。', order: 2 },
+    { id: 'c3', volumeId: 'v1', title: '第三章 初修', file: 'c3.txt', outline: '主角第一次尝试练气，展露不凡天资。', order: 3 },
+    { id: 'c4', volumeId: 'v2', title: '第四章 下山', file: 'c4.txt', outline: '主角奉命下山历练。', order: 4 }
   ]
 
   const contents: Record<string, string> = {
-    'c1.md': `# 第一章 穿越
-
-夜色如墨，星辰暗淡。
+    'c1.txt': `夜色如墨，星辰暗淡。
 
 萧远睁开双眼的瞬间，入目的是一片陌生的木质天花板。淡淡的檀香混合着某种不知名的药草气息，弥漫在狭小的房间里。
 
@@ -421,9 +435,9 @@ export function ensureSeedData(): void {
 
 "这是……修仙界？"
 `,
-    'c2.md': '# 第二章 觉醒\n\n（待续写）\n',
-    'c3.md': '# 第三章 初修\n\n（待续写）\n',
-    'c4.md': '# 第四章 下山\n\n（待续写）\n'
+    'c2.txt': '',
+    'c3.txt': '',
+    'c4.txt': ''
   }
 
   const insertChapter = db.prepare(`

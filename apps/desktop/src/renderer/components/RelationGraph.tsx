@@ -26,7 +26,7 @@ function CharacterNode({ data }: { data: { label: string; subtitle: string } }) 
       <Handle type="target" position={Position.Top} className="!bg-accent" />
       <div className="text-xs font-semibold text-gray-200 text-center">{data.label}</div>
       {data.subtitle && (
-        <div className="text-[13px] text-gray-500 text-center mt-0.5">{data.subtitle}</div>
+        <div className="text-sm text-gray-500 text-center mt-0.5">{data.subtitle}</div>
       )}
       <Handle type="source" position={Position.Bottom} className="!bg-accent" />
     </div>
@@ -121,7 +121,7 @@ export function RelationGraph(): React.ReactElement {
         <div className="text-center">
           <div className="mb-2 flex justify-center text-gray-500"><IconNetwork size={32} /></div>
           <p className="text-xs text-gray-500">暂无人物关系</p>
-          <p className="text-[12px] text-gray-600 mt-1">
+          <p className="text-sm text-gray-600 mt-1">
             添加人物卡并设置关系后，此处将显示关系图
           </p>
         </div>

@@ -129,25 +129,25 @@ function IssueGroup({
           <div key={i} className="rounded-lg border border-surface-600 bg-surface-700 p-2.5">
             <div className="flex items-start justify-between gap-2">
               <div className="flex-1">
-                <div className="text-[13px] text-gray-300 leading-4">
+                <div className="text-sm text-gray-300 leading-4">
                   {issue.description}
                 </div>
                 {issue.suggestion && (
-                  <div className="mt-1 text-[12px] text-gray-500 leading-3.5 flex items-start gap-1">
+                  <div className="mt-1 text-sm text-gray-500 leading-3.5 flex items-start gap-1">
                     <IconLightbulb size={10} className="shrink-0 mt-0.5" /> {issue.suggestion}
                   </div>
                 )}
               </div>
               {issue.chapterId && (
                 <button
-                  className="shrink-0 rounded px-1.5 py-0.5 text-[13px] text-accent-light hover:bg-surface-500"
+                  className="shrink-0 rounded px-1.5 py-0.5 text-sm text-accent-light hover:bg-surface-500"
                   onClick={() => void onJump(issue.chapterId!)}
                 >
                   跳转
                 </button>
               )}
             </div>
-            <div className="mt-1 text-[13px] text-gray-600">
+            <div className="mt-1 text-sm text-gray-600">
               类型：{issue.type}
             </div>
           </div>
