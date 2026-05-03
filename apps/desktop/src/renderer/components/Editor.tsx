@@ -67,7 +67,7 @@ export function Editor(): React.ReactElement {
           <input
             ref={titleRef}
             key={chapter.id + '-title'}
-            className="w-full bg-transparent text-xl font-bold text-gray-200 outline-none placeholder-gray-500 border-none"
+            className="w-full bg-transparent text-gray-200 outline-none placeholder-gray-500 border-none"
             defaultValue={chapter.title + ' '}
             placeholder="输入章节标题"
             onFocus={(e) => {
@@ -75,7 +75,6 @@ export function Editor(): React.ReactElement {
               e.currentTarget.setSelectionRange(len, len)
             }}
             onBlur={(e) => {
-              // 保存时去掉末尾空格
               const val = e.currentTarget.value.trimEnd()
               e.currentTarget.value = val + ' '
               if (chapter && val && val !== chapter.title) {
@@ -96,7 +95,9 @@ export function Editor(): React.ReactElement {
               }
             }}
             style={{
-              fontFamily: "'LXGW WenKai', 'Noto Serif SC', 'PingFang SC', serif"
+              fontFamily: "'LXGW WenKai', 'Noto Serif SC', 'PingFang SC', serif",
+              fontSize: '28px',
+              lineHeight: '1.4'
             }}
           />
 
@@ -110,8 +111,10 @@ export function Editor(): React.ReactElement {
             placeholder="请输入正文"
             style={{
               fontFamily: "'LXGW WenKai', 'Noto Serif SC', 'PingFang SC', serif",
-              fontSize: isWritingMode ? '18px' : '16px',
-              lineHeight: isWritingMode ? '2.2' : '2'
+              fontSize: isWritingMode ? '20px' : '18px',
+              lineHeight: isWritingMode ? '2.2' : '2',
+              paddingLeft: '2em',
+              letterSpacing: '0.07em'
             }}
           />
         </div>

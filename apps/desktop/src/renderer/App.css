@@ -1,5 +1,14 @@
 @import "tailwindcss";
 
+/* ===== 内置字体 ===== */
+@font-face {
+  font-family: 'LXGW WenKai';
+  src: url('./assets/fonts/LXGWWenKai-Regular.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* ===== 深色主题（默认） ===== */
 @theme {
   --color-surface-900: #111113;
