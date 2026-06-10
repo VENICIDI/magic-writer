@@ -1,14 +1,19 @@
-import { useEffect, useRef, useCallback } from 'react'
+import { useEffect, useRef, useCallback, useState } from 'react'
 import { useProjectStore } from '../stores/project'
+import { useAgentStore } from '../stores/agent'
+import { ContextMenu, type MenuItem } from './ContextMenu'
 
 export function Editor(): React.ReactElement {
   const chapter = useProjectStore((s) => s.currentChapter)
   const content = useProjectStore((s) => s.currentContent)
   const setContent = useProjectStore((s) => s.setContent)
   const isWritingMode = useProjectStore((s) => s.isWritingMode)
+  const send = useAgentStore((s) => s.send)
+  const appendToChapter = useProjectStore((s) => s.appendToChapter)
 
   const titleRef = useRef<HTMLInputElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const [ctxMenu, setCtxMenu] = useState<{ x: number; y: number; items: MenuItem[] } | null>(null)
 
   // 暴露选区给 Agent
   useEffect(() => {
@@ -109,6 +114,26 @@ export function Editor(): React.ReactElement {
             value={content}
             onChange={(e) => setContent(e.target.value)}
             placeholder="请输入正文"
+            onContextMenu={(e) => {
+              const ta = textareaRef.current
+              if (!ta) return
+              const selected = ta.value.substring(ta.selectionStart, ta.selectionEnd).trim()
+              if (!selected) return // 没选中文字不弹菜单
+              e.preventDefault()
+              const projectId = useProjectStore.getState().currentProject?.id
+              const chapterId = useProjectStore.getState().currentChapter?.id
+              setCtxMenu({
+                x: e.clientX,
+                y: e.clientY,
+                items: [
+                  { label: '润色', action: () => void send({ input: '润色这段文字', projectId, chapterId, selection: selected }) },
+                  { label: '扩写', action: () => void send({ input: '扩写这段文字', projectId, chapterId, selection: selected }) },
+                  { label: '缩写', action: () => void send({ input: '缩写这段文字', projectId, chapterId, selection: selected }) },
+                  { label: '改写对话', action: () => void send({ input: '改写这段对话，让人物口吻更鲜明', projectId, chapterId, selection: selected }) },
+                  { label: '去口水话', action: () => void send({ input: '去除口水话，精炼这段文字', projectId, chapterId, selection: selected }) },
+                ]
+              })
+            }}
             style={{
               fontFamily: "'LXGW WenKai', 'Noto Serif SC', 'PingFang SC', serif",
               fontSize: isWritingMode ? '20px' : '18px',
@@ -119,6 +144,10 @@ export function Editor(): React.ReactElement {
           />
         </div>
       </div>
+
+      {ctxMenu && (
+        <ContextMenu x={ctxMenu.x} y={ctxMenu.y} items={ctxMenu.items} onClose={() => setCtxMenu(null)} />
+      )}
     </main>
   )
 }

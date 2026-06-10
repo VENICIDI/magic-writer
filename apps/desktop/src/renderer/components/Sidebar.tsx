@@ -2,11 +2,12 @@ import { useMemo, useState, useCallback } from 'react'
 import { useProjectStore } from '../stores/project'
 import { WorldPanel } from './WorldPanel'
 import { ForeshadowingPanel } from './ForeshadowingPanel'
+import { OutlinePanel } from './OutlinePanel'
 import { ContextMenu, type MenuItem } from './ContextMenu'
 import { InputModal } from './InputModal'
-import { IconBook, IconGlobe, IconTarget } from './Icons'
+import { IconBook, IconGlobe, IconTarget, IconOutline } from './Icons'
 
-type InnerTab = 'chapters' | 'world' | 'foreshadowing'
+type InnerTab = 'chapters' | 'world' | 'foreshadowing' | 'outline'
 
 interface MenuState { x: number; y: number; items: MenuItem[] }
 
@@ -137,6 +138,7 @@ export function Sidebar(): React.ReactElement {
 
   const tabs: Array<{ id: InnerTab; icon: React.ReactNode; title: string }> = [
     { id: 'chapters', icon: <IconBook size={20} />, title: '章节' },
+    { id: 'outline', icon: <IconOutline size={20} />, title: '大纲' },
     { id: 'world', icon: <IconGlobe size={20} />, title: '世界观' },
     { id: 'foreshadowing', icon: <IconTarget size={20} />, title: '伏笔' }
   ]
@@ -167,6 +169,8 @@ export function Sidebar(): React.ReactElement {
           <WorldPanel />
         ) : activeTab === 'foreshadowing' ? (
           <ForeshadowingPanel />
+        ) : activeTab === 'outline' ? (
+          <OutlinePanel />
         ) : (
           <>
             {/* 作品信息 */}
