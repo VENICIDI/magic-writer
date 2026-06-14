@@ -9,7 +9,8 @@
     "start": "pnpm --filter @magic-writer/desktop start",
     "build:mac": "pnpm --filter @magic-writer/desktop build:mac",
     "build:win": "pnpm --filter @magic-writer/desktop build:win",
-    "build:linux": "pnpm --filter @magic-writer/desktop build:linux"
+    "build:linux": "pnpm --filter @magic-writer/desktop build:linux",
+    "worldview:dev": "pnpm --filter @magic-writer/worldview-analyzer dev"
   },
   "engines": {
     "node": ">=18"

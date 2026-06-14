@@ -74,6 +74,9 @@ const api = {
     deleteCharacter: (id: string): Promise<{ ok: boolean }> =>
       ipcRenderer.invoke('world:character:delete', id)
   },
+  worldview: {
+    getUrl: (): Promise<string | null> => ipcRenderer.invoke('worldview:getUrl')
+  },
   settings: {
     get: <T>(key: string, defaultValue: T): Promise<T> =>
       ipcRenderer.invoke('settings:get', { key, defaultValue }),

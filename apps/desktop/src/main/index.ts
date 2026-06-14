@@ -3,6 +3,7 @@ import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import { registerIpcHandlers } from './ipc'
 import { ensureSeedData } from './storage'
+import { startWorldviewService, stopWorldviewService } from './worldview/service'
 import { closeDB } from './storage/database'
 import { shutdownWorkerPool } from './worker/pool'
 
@@ -50,6 +51,9 @@ app.whenReady().then(() => {
   ensureSeedData()
 
   registerIpcHandlers()
+  void startWorldviewService().catch((err) => {
+    console.error('世界观分析服务启动失败:', err)
+  })
   createWindow()
 
   app.on('activate', () => {
@@ -64,6 +68,7 @@ app.on('window-all-closed', () => {
 })
 
 app.on('will-quit', () => {
+  void stopWorldviewService()
   shutdownWorkerPool()
   closeDB()
 })

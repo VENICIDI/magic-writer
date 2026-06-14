@@ -1,0 +1,1131 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>小说分析 · 主线 / 世界观 / 角色 / 物品</title>
+  <style>
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface2: #242836;
+      --border: #2e3345;
+      --text: #e8eaef;
+      --muted: #8b92a8;
+      --accent: #6c8cff;
+      --accent2: #4fd1a5;
+      --warn: #f6ad55;
+      --danger: #fc8181;
+      --radius: 10px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.5;
+    }
+    header {
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--surface);
+    }
+    header h1 { font-size: 1.15rem; font-weight: 600; }
+    header span { color: var(--muted); font-size: 0.85rem; }
+    .layout {
+      display: grid;
+      grid-template-columns: 300px 1fr;
+      min-height: calc(100vh - 57px);
+    }
+    aside {
+      border-right: 1px solid var(--border);
+      padding: 16px;
+      background: var(--surface);
+      overflow-y: auto;
+    }
+    main { padding: 20px 24px; overflow-y: auto; }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px;
+      margin-bottom: 14px;
+    }
+    .card h2 {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+    label { display: block; font-size: 0.85rem; color: var(--muted); margin-bottom: 4px; }
+    input[type="text"], input[type="file"] {
+      width: 100%;
+      padding: 8px 10px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      color: var(--text);
+      font-size: 0.9rem;
+      margin-bottom: 8px;
+    }
+    button {
+      cursor: pointer;
+      border: none;
+      border-radius: 6px;
+      padding: 8px 14px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      transition: opacity 0.15s;
+    }
+    button:hover { opacity: 0.88; }
+    button:disabled { opacity: 0.45; cursor: not-allowed; }
+    .btn-primary { background: var(--accent); color: #fff; width: 100%; }
+    .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+    .btn-danger { background: transparent; color: var(--danger); border: 1px solid var(--danger); font-size: 0.8rem; padding: 4px 10px; }
+    .job-list { list-style: none; }
+    .job-item {
+      padding: 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-bottom: 6px;
+      border: 1px solid transparent;
+    }
+    .job-item:hover { background: var(--surface2); }
+    .job-item.active { background: var(--surface2); border-color: var(--accent); }
+    .job-item .title { font-size: 0.9rem; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .job-item .meta { font-size: 0.75rem; color: var(--muted); margin-top: 2px; }
+    .status-badge {
+      display: inline-block;
+      font-size: 0.7rem;
+      padding: 1px 6px;
+      border-radius: 4px;
+      background: var(--surface2);
+      color: var(--muted);
+    }
+    .status-badge.extracting { color: var(--accent); }
+    .status-badge.completed { color: var(--accent2); }
+    .status-badge.failed { color: var(--danger); }
+    .progress-wrap { margin: 12px 0; }
+    .progress-bar {
+      height: 8px;
+      background: var(--surface2);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      border-radius: 4px;
+      transition: width 0.4s ease;
+    }
+    .progress-label { font-size: 0.85rem; color: var(--muted); margin-top: 6px; }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .stat-box {
+      background: var(--surface2);
+      border-radius: 8px;
+      padding: 12px;
+      text-align: center;
+    }
+    .stat-box .num { font-size: 1.6rem; font-weight: 700; color: var(--accent); }
+    .stat-box .lbl { font-size: 0.75rem; color: var(--muted); margin-top: 2px; }
+    .concurrency-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .concurrency-row input[type="range"] { flex: 1; accent-color: var(--accent); }
+    .concurrency-val {
+      min-width: 28px;
+      text-align: center;
+      font-weight: 700;
+      font-size: 1.1rem;
+      color: var(--accent);
+    }
+    .tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+    .tab {
+      padding: 6px 14px;
+      border-radius: 6px;
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--border);
+      font-size: 0.85rem;
+    }
+    .tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .tag-list { display: flex; flex-wrap: wrap; gap: 6px; }
+    .tag {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+    th, td {
+      text-align: left;
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--border);
+    }
+    th { color: var(--muted); font-weight: 500; font-size: 0.75rem; }
+    .empty { color: var(--muted); text-align: center; padding: 32px; font-size: 0.9rem; }
+    .detail-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .detail-header h2 { font-size: 1.25rem; font-weight: 600; }
+    .detail-header .sub { color: var(--muted); font-size: 0.85rem; margin-top: 4px; }
+    .actions { display: flex; gap: 8px; flex-shrink: 0; }
+    .report-box {
+      background: var(--surface2);
+      border-radius: 8px;
+      padding: 16px;
+      max-height: 500px;
+      overflow-y: auto;
+      font-size: 0.85rem;
+      white-space: pre-wrap;
+      font-family: ui-monospace, monospace;
+      line-height: 1.6;
+    }
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+      z-index: 100;
+    }
+    .toast.show { opacity: 1; }
+    .stat-box.clickable { cursor: pointer; transition: border-color 0.15s, transform 0.15s; border: 1px solid transparent; }
+    .stat-box.clickable:hover { border-color: var(--accent); transform: translateY(-1px); }
+    .toolbar {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .toolbar input[type="search"] {
+      flex: 1;
+      min-width: 180px;
+      padding: 8px 10px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      color: var(--text);
+      font-size: 0.85rem;
+    }
+    .toolbar .count { font-size: 0.8rem; color: var(--muted); }
+    .entity-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 12px;
+    }
+    .entity-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px;
+      cursor: pointer;
+      color: var(--text);
+      font-family: inherit;
+      transition: border-color 0.15s, transform 0.15s, box-shadow 0.15s;
+      text-align: left;
+      width: 100%;
+    }
+    .entity-card:hover {
+      border-color: var(--accent);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+    }
+    .entity-card .name {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 6px;
+      line-height: 1.3;
+      color: var(--text);
+    }
+    .entity-card .badge {
+      display: inline-block;
+      font-size: 0.7rem;
+      padding: 2px 8px;
+      border-radius: 12px;
+      background: rgba(108, 140, 255, 0.15);
+      color: var(--accent);
+      margin-bottom: 8px;
+    }
+    .entity-card .badge.item { background: rgba(79, 209, 165, 0.15); color: var(--accent2); }
+    .entity-card .desc {
+      font-size: 0.8rem;
+      color: var(--muted);
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      line-height: 1.5;
+    }
+    .entity-card .meta-line {
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-top: 8px;
+    }
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.65);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+      padding: 20px;
+    }
+    .modal-overlay.show { display: flex; }
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      width: min(560px, 100%);
+      max-height: 85vh;
+      overflow-y: auto;
+      padding: 20px 22px;
+      position: relative;
+      color: var(--text);
+    }
+    .modal-close {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      font-size: 1.1rem;
+      line-height: 1;
+      padding: 0;
+    }
+    .modal h3 { font-size: 1.35rem; margin-bottom: 4px; padding-right: 36px; color: var(--text); }
+    .modal .role-badge {
+      display: inline-block;
+      font-size: 0.75rem;
+      padding: 3px 10px;
+      border-radius: 12px;
+      background: rgba(108, 140, 255, 0.15);
+      color: var(--accent);
+      margin-bottom: 14px;
+    }
+    .modal .role-badge.item { background: rgba(79, 209, 165, 0.15); color: var(--accent2); }
+    .modal-section { margin-bottom: 14px; }
+    .modal-section h4 {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    .modal-section p, .modal-section li { font-size: 0.9rem; line-height: 1.6; color: var(--text); }
+    .modal-section ul { padding-left: 18px; }
+    .modal-section li { margin-bottom: 4px; }
+    .chip-nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 14px;
+    }
+    .chip {
+      padding: 4px 12px;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-family: inherit;
+      cursor: pointer;
+    }
+    .chip.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .section-block { margin-bottom: 18px; }
+    .section-block h3 {
+      font-size: 0.85rem;
+      color: var(--accent);
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+    .section-block .overview {
+      font-size: 0.9rem;
+      line-height: 1.7;
+      color: var(--text);
+      margin-bottom: 12px;
+      padding: 12px;
+      background: var(--surface2);
+      border-radius: 8px;
+      border-left: 3px solid var(--accent);
+    }
+    .info-list { list-style: none; }
+    .info-list li {
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin-bottom: 8px;
+      font-size: 0.85rem;
+      line-height: 1.55;
+      color: var(--text);
+      background: var(--surface2);
+    }
+    .info-list li .idx {
+      color: var(--muted);
+      font-size: 0.75rem;
+      margin-right: 8px;
+    }
+    .plot-arc {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px;
+      margin-bottom: 12px;
+      background: var(--surface2);
+    }
+    .plot-arc h4 { font-size: 0.95rem; margin-bottom: 6px; color: var(--text); }
+    .plot-arc p { font-size: 0.85rem; color: var(--muted); margin-bottom: 8px; line-height: 1.55; }
+    .plot-event-type {
+      display: inline-block;
+      font-size: 0.7rem;
+      padding: 1px 8px;
+      border-radius: 10px;
+      background: rgba(246, 173, 85, 0.15);
+      color: var(--warn);
+      margin-left: 6px;
+    }
+    .entity-card .badge.entity { background: rgba(246, 173, 85, 0.15); color: var(--warn); }
+    .role-badge.entity { background: rgba(246, 173, 85, 0.15); color: var(--warn); }
+    .source-hint {
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+    @media (max-width: 768px) {
+      .layout { grid-template-columns: 1fr; }
+      aside { border-right: none; border-bottom: 1px solid var(--border); max-height: 40vh; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>小说四维分析</h1>
+    <span>主线 · 世界观 · 角色 · 物品</span>
+  </header>
+
+  <div class="layout">
+    <aside>
+      <div class="card">
+        <h2>新建任务</h2>
+        <label>上传 txt 文件</label>
+        <input type="file" id="fileInput" accept=".txt" />
+        <label>标题（可选）</label>
+        <input type="text" id="titleInput" placeholder="小说名称" />
+        <button class="btn-primary" id="uploadBtn">上传并开始分析</button>
+        <hr style="border:none;border-top:1px solid var(--border);margin:12px 0" />
+        <label>或服务器本地路径</label>
+        <input type="text" id="localPath" placeholder="修罗特种兵.txt" value="修罗特种兵.txt" />
+        <button class="btn-secondary" id="localBtn" style="width:100%;margin-top:4px">分析本地文件</button>
+      </div>
+
+      <div class="card">
+        <h2>并发设置</h2>
+        <div class="concurrency-row">
+          <input type="range" id="concurrencySlider" min="1" max="32" value="4" />
+          <span class="concurrency-val" id="concurrencyVal">4</span>
+        </div>
+        <p style="font-size:0.75rem;color:var(--muted);margin-top:8px">拖动滑块实时调整 LLM 并行数，对进行中的任务立即生效</p>
+      </div>
+
+      <div class="card">
+        <h2>任务列表</h2>
+        <ul class="job-list" id="jobList"></ul>
+      </div>
+    </aside>
+
+    <main id="mainPanel">
+      <div class="empty">← 选择左侧任务，或上传小说开始分析</div>
+    </main>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal" id="modalContent" role="dialog" aria-modal="true"></div>
+  </div>
+
+  <script>
+    // 与后端同端口时留空；单独用 serve 等静态服务时自动指向 8000
+    const API = (() => {
+      const fromQuery = new URLSearchParams(location.search).get("api");
+      if (fromQuery) return fromQuery.replace(/\/$/, "");
+      const port = location.port;
+      if (port && port !== "8000") {
+        return `${location.protocol}//${location.hostname}:8000`;
+      }
+      return "";
+    })();
+    let selectedJobId = null;
+    let pollTimer = null;
+    let concurrencyDebounce = null;
+    let worldviewCache = null;
+    let cardFilter = {
+      chars: "", items: "", entities: "",
+      plot: "", worldview: "", appendix: "",
+    };
+    let worldviewSection = "geography";
+
+    function toast(msg) {
+      const el = document.getElementById("toast");
+      el.textContent = msg;
+      el.classList.add("show");
+      setTimeout(() => el.classList.remove("show"), 2500);
+    }
+
+    async function api(path, opts = {}) {
+      const res = await fetch(API + path, opts);
+      const data = res.headers.get("content-type")?.includes("json") ? await res.json() : await res.text();
+      if (!res.ok) throw new Error(data.detail || data || res.statusText);
+      return data;
+    }
+
+    async function loadSettings() {
+      const s = await api("/settings");
+      const slider = document.getElementById("concurrencySlider");
+      slider.min = s.limits.min;
+      slider.max = s.limits.max;
+      slider.value = s.maxConcurrentChunks;
+      document.getElementById("concurrencyVal").textContent = s.maxConcurrentChunks;
+    }
+
+    async function saveConcurrency(val) {
+      document.getElementById("concurrencyVal").textContent = val;
+      clearTimeout(concurrencyDebounce);
+      concurrencyDebounce = setTimeout(async () => {
+        try {
+          const s = await api("/settings", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ maxConcurrentChunks: Number(val) }),
+          });
+          toast(`并发已设为 ${s.maxConcurrentChunks}`);
+        } catch (e) {
+          toast("设置失败: " + e.message);
+        }
+      }, 300);
+    }
+
+    function statusLabel(s) {
+      const map = { pending: "等待", chunking: "切分", extracting: "提取", merging: "合并", synthesizing: "报告", completed: "完成", failed: "失败" };
+      return map[s] || s;
+    }
+
+    async function loadJobs() {
+      const jobs = await api("/jobs?light=1");
+      const list = document.getElementById("jobList");
+      if (!jobs.length) {
+        list.innerHTML = '<li class="empty" style="padding:12px">暂无任务</li>';
+        return;
+      }
+      list.innerHTML = jobs.map(j => `
+        <li class="job-item ${j.id === selectedJobId ? "active" : ""}" data-id="${j.id}">
+          <div class="title">${esc(j.title)}</div>
+          <div class="meta">
+            <span class="status-badge ${j.progress.status}">${statusLabel(j.progress.status)}</span>
+            ${j.progress.percent.toFixed(0)}% · ${(j.totalChars/10000).toFixed(0)}万字
+          </div>
+        </li>
+      `).join("");
+      list.querySelectorAll(".job-item").forEach(el => {
+        el.onclick = () => selectJob(el.dataset.id);
+      });
+    }
+
+    function esc(s) {
+      const d = document.createElement("div");
+      d.textContent = s ?? "";
+      return d.innerHTML;
+    }
+
+    async function selectJob(id) {
+      selectedJobId = id;
+      worldviewCache = null;
+      await loadJobs();
+      await renderDetail();
+      startPoll();
+    }
+
+    async function loadWorldview(jobId) {
+      if (worldviewCache?.jobId === jobId) return worldviewCache;
+      const data = await api(`/jobs/${jobId}/worldview`);
+      worldviewCache = { jobId, ...data };
+      return worldviewCache;
+    }
+
+    function startPoll() {
+      clearInterval(pollTimer);
+      pollTimer = setInterval(async () => {
+        if (!selectedJobId) return;
+        try {
+          const summary = await api(`/jobs/${selectedJobId}/summary`);
+          if (["extracting", "merging", "synthesizing", "chunking", "pending"].includes(summary.progress.status)) {
+            await renderDetail(summary);
+            await loadJobs();
+          } else if (summary.progress.status === "completed" || summary.progress.status === "failed") {
+            await renderDetail(summary);
+            await loadJobs();
+            clearInterval(pollTimer);
+          }
+        } catch (_) {}
+      }, 2000);
+    }
+
+    async function renderDetail(cached) {
+      if (!selectedJobId) return;
+      const data = cached || await api(`/jobs/${selectedJobId}/summary`);
+      if (!["completed", "failed"].includes(data.progress.status)) {
+        worldviewCache = null;
+      }
+      const { progress: p, stats: s, title, jobId, reportSummary, error } = data;
+      const panel = document.getElementById("mainPanel");
+
+      panel.innerHTML = `
+        <div class="detail-header">
+          <div>
+            <h2>${esc(title)}</h2>
+            <div class="sub">任务 ID: ${jobId} · ${(data.progress ? "" : "")}</div>
+          </div>
+          <div class="actions">
+            ${p.status === "completed" ? '<button class="btn-secondary" id="dlReport">下载报告</button>' : ""}
+            <button class="btn-danger" id="delJob">删除</button>
+          </div>
+        </div>
+
+        <div class="progress-wrap">
+          <div class="progress-bar"><div class="progress-fill" style="width:${p.percent}%"></div></div>
+          <div class="progress-label">${statusLabel(p.status)} · ${p.message} · ${p.processedChunks || s.completedChunks}/${s.totalChunks || p.totalChunks} 块</div>
+        </div>
+
+        ${error ? `<div class="card" style="border-color:var(--danger)"><p style="color:var(--danger)">${esc(error)}</p></div>` : ""}
+
+        <div class="stats-grid">
+          <div class="stat-box clickable" data-goto="plot"><div class="num">${s.plotEvents}</div><div class="lbl">主线</div></div>
+          <div class="stat-box clickable" data-goto="worldview" data-section="geography"><div class="num">${s.geography}</div><div class="lbl">地理</div></div>
+          <div class="stat-box clickable" data-goto="worldview" data-section="factions"><div class="num">${s.factions}</div><div class="lbl">势力</div></div>
+          <div class="stat-box clickable" data-goto="worldview" data-section="powerSystem"><div class="num">${s.powerSystem}</div><div class="lbl">力量体系</div></div>
+          <div class="stat-box clickable" data-goto="worldview" data-section="historyTimeline"><div class="num">${s.historyTimeline}</div><div class="lbl">历史</div></div>
+          <div class="stat-box clickable" data-goto="entities"><div class="num">${s.keyEntities}</div><div class="lbl">实体百科</div></div>
+          <div class="stat-box clickable" data-goto="chars"><div class="num">${s.characters.length}</div><div class="lbl">角色</div></div>
+          <div class="stat-box clickable" data-goto="items"><div class="num">${s.items.length}</div><div class="lbl">物品</div></div>
+          <div class="stat-box clickable" data-goto="appendix"><div class="num">${s.openQuestions + s.contradictions}</div><div class="lbl">附录</div></div>
+        </div>
+
+        <div class="tabs" id="tabs">
+          <button class="tab active" data-tab="recent">最近块</button>
+          <button class="tab" data-tab="plot">主线</button>
+          <button class="tab" data-tab="worldview">世界观</button>
+          <button class="tab" data-tab="entities">实体</button>
+          <button class="tab" data-tab="chars">角色</button>
+          <button class="tab" data-tab="items">物品</button>
+          <button class="tab" data-tab="appendix">附录</button>
+          <button class="tab" data-tab="report">报告</button>
+        </div>
+        <div class="card" id="tabContent"></div>
+      `;
+
+      document.getElementById("delJob")?.addEventListener("click", async () => {
+        if (!confirm("确定删除此任务？")) return;
+        await api(`/jobs/${jobId}`, { method: "DELETE" });
+        selectedJobId = null;
+        clearInterval(pollTimer);
+        panel.innerHTML = '<div class="empty">← 选择左侧任务，或上传小说开始分析</div>';
+        await loadJobs();
+        toast("已删除");
+      });
+
+      document.getElementById("dlReport")?.addEventListener("click", () => {
+        window.open(`${API}/jobs/${jobId}/report`, "_blank");
+      });
+
+      panel.querySelectorAll(".stat-box.clickable").forEach(box => {
+        box.onclick = () => {
+          if (box.dataset.section) worldviewSection = box.dataset.section;
+          const tabEl = panel.querySelector(`.tab[data-tab="${box.dataset.goto}"]`);
+          tabEl?.click();
+        };
+      });
+
+      const tabs = panel.querySelectorAll(".tab");
+      tabs.forEach(t => t.onclick = () => {
+        tabs.forEach(x => x.classList.remove("active"));
+        t.classList.add("active");
+        showTab(t.dataset.tab, s, p, reportSummary, jobId);
+      });
+      showTab("recent", s, p, reportSummary, jobId);
+    }
+
+    function truncate(s, n = 72) {
+      if (!s) return "暂无描述";
+      return s.length > n ? s.slice(0, n) + "…" : s;
+    }
+
+    function filterByQuery(list, query, fields) {
+      const q = query.trim().toLowerCase();
+      if (!q) return list;
+      return list.filter(item =>
+        fields.some(f => String(item[f] ?? "").toLowerCase().includes(q) ||
+          (Array.isArray(item[f]) && item[f].some(v => String(v).toLowerCase().includes(q))))
+      );
+    }
+
+    const WORLDVIEW_SECTIONS = [
+      { id: "geography", label: "地理" },
+      { id: "factions", label: "势力" },
+      { id: "powerSystem", label: "力量体系" },
+      { id: "racesSpecies", label: "种族" },
+      { id: "historyTimeline", label: "历史" },
+      { id: "rulesLaws", label: "规则" },
+      { id: "technologyMagic", label: "科技魔法" },
+      { id: "cultureReligion", label: "文化宗教" },
+    ];
+
+    function filterStrings(list, query) {
+      const q = query.trim().toLowerCase();
+      if (!q) return list;
+      return list.filter(s => s.toLowerCase().includes(q));
+    }
+
+    function renderStringList(items, query, emptyMsg) {
+      const filtered = filterStrings(items, query);
+      if (!filtered.length) return `<div class="empty">${emptyMsg}</div>`;
+      return `<ul class="info-list">${filtered.map((s, i) =>
+        `<li><span class="idx">${i + 1}</span>${esc(s)}</li>`
+      ).join("")}</ul>`;
+    }
+
+    function renderCharacterGrid(characters, query) {
+      const filtered = filterByQuery(characters, query, ["name", "role", "description", "aliases", "relationships", "abilities"]);
+      if (!filtered.length) return '<div class="empty">没有匹配的角色</div>';
+      return `<div class="entity-grid">${filtered.map(c => `
+        <button type="button" class="entity-card" data-kind="char" data-idx="${characters.indexOf(c)}">
+          <div class="name">${esc(c.name)}</div>
+          ${c.role ? `<span class="badge">${esc(c.role)}</span>` : ""}
+          <div class="desc">${esc(truncate(c.description))}</div>
+          ${c.relationships?.length ? `<div class="meta-line">关系 ${c.relationships.length} 条</div>` : ""}
+        </button>
+      `).join("")}</div>`;
+    }
+
+    function renderItemGrid(items, query) {
+      const filtered = filterByQuery(items, query, ["name", "category", "description", "owner", "aliases", "abilities", "significance"]);
+      if (!filtered.length) return '<div class="empty">没有匹配的物品</div>';
+      return `<div class="entity-grid">${filtered.map(i => `
+        <button type="button" class="entity-card" data-kind="item" data-idx="${items.indexOf(i)}">
+          <div class="name">${esc(i.name)}</div>
+          ${i.category ? `<span class="badge item">${esc(i.category)}</span>` : ""}
+          <div class="desc">${esc(truncate(i.description))}</div>
+          ${i.owner ? `<div class="meta-line">持有者：${esc(i.owner)}</div>` : ""}
+        </button>
+      `).join("")}</div>`;
+    }
+
+    function renderEntityGrid(entities, query) {
+      const filtered = filterByQuery(entities, query, ["name", "category", "description", "aliases"]);
+      if (!filtered.length) return '<div class="empty">没有匹配的实体</div>';
+      return `<div class="entity-grid">${filtered.map(e => `
+        <button type="button" class="entity-card" data-kind="entity" data-idx="${entities.indexOf(e)}">
+          <div class="name">${esc(e.name)}</div>
+          ${e.category ? `<span class="badge entity">${esc(e.category)}</span>` : ""}
+          <div class="desc">${esc(truncate(e.description))}</div>
+        </button>
+      `).join("")}</div>`;
+    }
+
+    function renderPlotContent(w, query) {
+      const mp = w.mainPlot;
+      const q = query.trim().toLowerCase();
+      const match = (s) => !q || String(s).toLowerCase().includes(q);
+      let html = "";
+      if (w.source === "partial") {
+        html += '<p class="source-hint">分析进行中，以下为已提取块汇总；合并完成后将显示完整主线结构。</p>';
+      }
+      if (mp.overview && match(mp.overview)) {
+        html += `<div class="section-block"><h3>剧情总览</h3><div class="overview">${esc(mp.overview)}</div></div>`;
+      }
+      if (mp.arcs?.length) {
+        const arcs = mp.arcs.filter(a => match(a.name) || match(a.summary) || a.events.some(match));
+        if (arcs.length) {
+          html += `<div class="section-block"><h3>分阶段叙事</h3>${arcs.map(a => `
+            <div class="plot-arc">
+              <h4>${esc(a.name)}</h4>
+              <p>${esc(a.summary)}</p>
+              ${a.events.length ? `<ul class="info-list">${a.events.filter(match).map(e => `<li>${esc(e)}</li>`).join("")}</ul>` : ""}
+            </div>
+          `).join("")}</div>`;
+        }
+      }
+      const listSections = [
+        ["关键转折点", mp.keyTurningPoints],
+        ["核心矛盾", mp.conflicts],
+        ["伏笔悬念", mp.foreshadowing],
+        ["未解线索", mp.unresolvedThreads],
+        ["时间线", mp.timeline],
+      ];
+      for (const [title, items] of listSections) {
+        const filtered = (items || []).filter(match);
+        if (filtered.length) {
+          html += `<div class="section-block"><h3>${title}</h3>${renderStringList(filtered, "", "暂无")}</div>`;
+        }
+      }
+      const events = w.plotEvents.filter(e =>
+        match(e.summary) || match(e.type) || e.characters.some(match)
+      );
+      if (events.length) {
+        html += `<div class="section-block"><h3>情节事件（${events.length} 条）</h3><ul class="info-list">${events.map(e => `
+          <li>
+            ${esc(e.summary)}
+            ${e.type ? `<span class="plot-event-type">${esc(e.type)}</span>` : ""}
+            ${e.characters?.length ? `<div class="meta-line" style="margin-top:6px">角色：${esc(e.characters.join("、"))}</div>` : ""}
+            <div class="meta-line">#${e.chunkIndex + 1} ${esc(e.chunkTitle)}</div>
+          </li>
+        `).join("")}</ul></div>`;
+      }
+      return html || '<div class="empty">尚无主线数据</div>';
+    }
+
+    function renderWorldviewContent(w, section, query) {
+      const sec = WORLDVIEW_SECTIONS.find(s => s.id === section) || WORLDVIEW_SECTIONS[0];
+      const items = w[sec.id] || [];
+      return `
+        <div class="chip-nav">${WORLDVIEW_SECTIONS.map(s => `
+          <button type="button" class="chip ${s.id === sec.id ? "active" : ""}" data-section="${s.id}">${s.label} (${(w[s.id] || []).length})</button>
+        `).join("")}</div>
+        ${renderStringList(items, query, `暂无${sec.label}数据`)}
+      `;
+    }
+
+    function renderAppendixContent(w, query) {
+      const blocks = [
+        ["待核实矛盾", w.contradictions],
+        ["开放问题", w.openQuestions],
+        ["置信度说明", w.confidenceNotes],
+      ];
+      let html = w.source === "partial"
+        ? '<p class="source-hint">矛盾与置信度说明将在合并阶段生成。</p>'
+        : "";
+      let hasData = false;
+      for (const [title, items] of blocks) {
+        const filtered = filterStrings(items || [], query);
+        if (filtered.length) {
+          hasData = true;
+          html += `<div class="section-block"><h3>${title}</h3>${renderStringList(filtered, "", "暂无")}</div>`;
+        }
+      }
+      return hasData ? html : '<div class="empty">暂无附录数据</div>';
+    }
+
+    function listBlock(title, items) {
+      if (!items?.length) return "";
+      return `<div class="modal-section"><h4>${title}</h4><ul>${items.map(x => `<li>${esc(x)}</li>`).join("")}</ul></div>`;
+    }
+
+    function openCharacterModal(c) {
+      const modal = document.getElementById("modalContent");
+      modal.innerHTML = `
+        <button type="button" class="modal-close" id="modalClose" aria-label="关闭">×</button>
+        <h3>${esc(c.name)}</h3>
+        ${c.role ? `<span class="role-badge">${esc(c.role)}</span>` : ""}
+        ${c.aliases?.length ? `<div class="modal-section"><h4>别名</h4><p>${esc(c.aliases.join("、"))}</p></div>` : ""}
+        <div class="modal-section"><h4>简介</h4><p>${esc(c.description || "暂无")}</p></div>
+        ${listBlock("人物关系", c.relationships)}
+        ${listBlock("能力 / 特长", c.abilities)}
+        ${listBlock("成长与经历", c.development)}
+        ${c.firstMentionChunk != null ? `<div class="modal-section"><h4>首次出现</h4><p>第 ${c.firstMentionChunk + 1} 块</p></div>` : ""}
+      `;
+      document.getElementById("modalOverlay").classList.add("show");
+      bindModalClose();
+    }
+
+    function openItemModal(i) {
+      const modal = document.getElementById("modalContent");
+      modal.innerHTML = `
+        <button type="button" class="modal-close" id="modalClose" aria-label="关闭">×</button>
+        <h3>${esc(i.name)}</h3>
+        ${i.category ? `<span class="role-badge item">${esc(i.category)}</span>` : ""}
+        ${i.aliases?.length ? `<div class="modal-section"><h4>别名</h4><p>${esc(i.aliases.join("、"))}</p></div>` : ""}
+        <div class="modal-section"><h4>描述</h4><p>${esc(i.description || "暂无")}</p></div>
+        ${i.owner ? `<div class="modal-section"><h4>持有者</h4><p>${esc(i.owner)}</p></div>` : ""}
+        ${listBlock("功效 / 能力", i.abilities)}
+        ${i.significance ? `<div class="modal-section"><h4>剧情意义</h4><p>${esc(i.significance)}</p></div>` : ""}
+        ${i.firstMentionChunk != null ? `<div class="modal-section"><h4>首次出现</h4><p>第 ${i.firstMentionChunk + 1} 块</p></div>` : ""}
+      `;
+      document.getElementById("modalOverlay").classList.add("show");
+      bindModalClose();
+    }
+
+    function openEntityModal(e) {
+      const modal = document.getElementById("modalContent");
+      modal.innerHTML = `
+        <button type="button" class="modal-close" id="modalClose" aria-label="关闭">×</button>
+        <h3>${esc(e.name)}</h3>
+        ${e.category ? `<span class="role-badge entity">${esc(e.category)}</span>` : ""}
+        ${e.aliases?.length ? `<div class="modal-section"><h4>别名</h4><p>${esc(e.aliases.join("、"))}</p></div>` : ""}
+        <div class="modal-section"><h4>描述</h4><p>${esc(e.description || "暂无")}</p></div>
+        ${e.firstMentionChunk != null ? `<div class="modal-section"><h4>首次出现</h4><p>第 ${e.firstMentionChunk + 1} 块</p></div>` : ""}
+      `;
+      document.getElementById("modalOverlay").classList.add("show");
+      bindModalClose();
+    }
+
+    function closeModal() {
+      document.getElementById("modalOverlay").classList.remove("show");
+    }
+
+    function bindModalClose() {
+      document.getElementById("modalClose").onclick = closeModal;
+    }
+
+    document.getElementById("modalOverlay").onclick = (e) => {
+      if (e.target.id === "modalOverlay") closeModal();
+    };
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") closeModal();
+    });
+
+    function bindEntityCards(kind, w) {
+      document.querySelectorAll(".entity-card").forEach(card => {
+        card.onclick = () => {
+          const idx = Number(card.dataset.idx);
+          if (kind === "char") openCharacterModal(w.characters[idx]);
+          else if (kind === "item") openItemModal(w.items[idx]);
+          else openEntityModal(w.keyEntities[idx]);
+        };
+      });
+    }
+
+    function bindWorldviewChips(el, w, jobId, progress, reportSummary, stats) {
+      el.querySelectorAll(".chip[data-section]").forEach(chip => {
+        chip.onclick = () => {
+          worldviewSection = chip.dataset.section;
+          showTab("worldview", stats, progress, reportSummary, jobId);
+        };
+      });
+    }
+
+    function bindSearch(el, inputId, onSearch) {
+      const input = document.getElementById(inputId);
+      if (!input) return;
+      input.oninput = (e) => onSearch(e.target.value);
+    }
+
+    async function showTab(tab, stats, progress, reportSummary, jobId) {
+      const el = document.getElementById("tabContent");
+      if (tab === "recent") {
+        if (!stats.recentChunks.length) {
+          el.innerHTML = '<div class="empty">尚无提取结果，请等待…</div>';
+          return;
+        }
+        el.innerHTML = `<table>
+          <thead><tr><th>块</th><th>标题</th><th>情节</th><th>角色</th><th>物品</th></tr></thead>
+          <tbody>${stats.recentChunks.map(c => `
+            <tr>
+              <td>#${c.index + 1}</td>
+              <td>${esc(c.title)}</td>
+              <td>${c.plotEvents}</td>
+              <td>${esc(c.characters.join("、") || "—")}</td>
+              <td>${esc(c.items.join("、") || "—")}</td>
+            </tr>
+          `).join("")}</tbody>
+        </table>`;
+      } else if (["plot", "worldview", "entities", "chars", "items", "appendix"].includes(tab)) {
+        el.innerHTML = '<div class="empty">加载中…</div>';
+        try {
+          const w = await loadWorldview(jobId);
+          if (tab === "plot") {
+            el.innerHTML = `
+              <div class="toolbar">
+                <input type="search" id="plotSearch" placeholder="搜索主线、转折、时间线…" value="${esc(cardFilter.plot)}" />
+              </div>
+              ${renderPlotContent(w, cardFilter.plot)}
+            `;
+            bindSearch(el, "plotSearch", (val) => {
+              cardFilter.plot = val;
+              const toolbar = el.querySelector(".toolbar");
+              while (toolbar.nextElementSibling) toolbar.nextElementSibling.remove();
+              toolbar.insertAdjacentHTML("afterend", renderPlotContent(w, cardFilter.plot));
+            });
+          } else if (tab === "worldview") {
+            el.innerHTML = `
+              <div class="toolbar">
+                <input type="search" id="worldviewSearch" placeholder="搜索当前分类…" value="${esc(cardFilter.worldview)}" />
+              </div>
+              ${renderWorldviewContent(w, worldviewSection, cardFilter.worldview)}
+            `;
+            bindWorldviewChips(el, w, jobId, progress, reportSummary, stats);
+            bindSearch(el, "worldviewSearch", (val) => {
+              cardFilter.worldview = val;
+              const toolbar = el.querySelector(".toolbar");
+              while (toolbar.nextElementSibling) toolbar.nextElementSibling.remove();
+              toolbar.insertAdjacentHTML("afterend", renderWorldviewContent(w, worldviewSection, cardFilter.worldview));
+              bindWorldviewChips(el, w, jobId, progress, reportSummary, stats);
+            });
+          } else if (tab === "entities") {
+            el.innerHTML = `
+              <div class="toolbar">
+                <input type="search" id="entitySearch" placeholder="搜索地点、概念、组织…" value="${esc(cardFilter.entities)}" />
+                <span class="count">共 ${w.keyEntities.length} 个</span>
+              </div>
+              ${renderEntityGrid(w.keyEntities, cardFilter.entities)}
+            `;
+            bindSearch(el, "entitySearch", (val) => {
+              cardFilter.entities = val;
+              const toolbar = el.querySelector(".toolbar");
+              while (toolbar.nextElementSibling) toolbar.nextElementSibling.remove();
+              toolbar.insertAdjacentHTML("afterend", renderEntityGrid(w.keyEntities, cardFilter.entities));
+              bindEntityCards("entity", w);
+            });
+            bindEntityCards("entity", w);
+          } else if (tab === "chars") {
+            el.innerHTML = `
+              <div class="toolbar">
+                <input type="search" id="charSearch" placeholder="搜索角色名、关系、能力…" value="${esc(cardFilter.chars)}" />
+                <span class="count">共 ${w.characters.length} 位</span>
+              </div>
+              ${renderCharacterGrid(w.characters, cardFilter.chars)}
+            `;
+            bindSearch(el, "charSearch", (val) => {
+              cardFilter.chars = val;
+              const toolbar = el.querySelector(".toolbar");
+              while (toolbar.nextElementSibling) toolbar.nextElementSibling.remove();
+              toolbar.insertAdjacentHTML("afterend", renderCharacterGrid(w.characters, cardFilter.chars));
+              bindEntityCards("char", w);
+            });
+            bindEntityCards("char", w);
+          } else if (tab === "items") {
+            el.innerHTML = `
+              <div class="toolbar">
+                <input type="search" id="itemSearch" placeholder="搜索物品名、类别、持有者…" value="${esc(cardFilter.items)}" />
+                <span class="count">共 ${w.items.length} 件</span>
+              </div>
+              ${renderItemGrid(w.items, cardFilter.items)}
+            `;
+            bindSearch(el, "itemSearch", (val) => {
+              cardFilter.items = val;
+              const toolbar = el.querySelector(".toolbar");
+              while (toolbar.nextElementSibling) toolbar.nextElementSibling.remove();
+              toolbar.insertAdjacentHTML("afterend", renderItemGrid(w.items, cardFilter.items));
+              bindEntityCards("item", w);
+            });
+            bindEntityCards("item", w);
+          } else if (tab === "appendix") {
+            el.innerHTML = `
+              <div class="toolbar">
+                <input type="search" id="appendixSearch" placeholder="搜索矛盾、开放问题…" value="${esc(cardFilter.appendix)}" />
+              </div>
+              ${renderAppendixContent(w, cardFilter.appendix)}
+            `;
+            bindSearch(el, "appendixSearch", (val) => {
+              cardFilter.appendix = val;
+              const toolbar = el.querySelector(".toolbar");
+              while (toolbar.nextElementSibling) toolbar.nextElementSibling.remove();
+              toolbar.insertAdjacentHTML("afterend", renderAppendixContent(w, cardFilter.appendix));
+            });
+          }
+        } catch (e) {
+          el.innerHTML = `<div class="empty">${esc(e.message)}</div>`;
+        }
+      } else if (tab === "report") {
+        if (progress.status !== "completed") {
+          el.innerHTML = `<div class="empty">报告生成中…当前 ${statusLabel(progress.status)}<br>${reportSummary ? esc(reportSummary) : ""}</div>`;
+          return;
+        }
+        try {
+          const md = await api(`/jobs/${jobId}/report`);
+          el.innerHTML = `<div class="report-box">${esc(md)}</div>`;
+        } catch (e) {
+          el.innerHTML = `<div class="empty">${esc(e.message)}</div>`;
+        }
+      }
+    }
+
+    document.getElementById("uploadBtn").onclick = async () => {
+      const file = document.getElementById("fileInput").files[0];
+      if (!file) { toast("请选择文件"); return; }
+      const fd = new FormData();
+      fd.append("file", file);
+      const title = document.getElementById("titleInput").value.trim();
+      if (title) fd.append("title", title);
+      const btn = document.getElementById("uploadBtn");
+      btn.disabled = true;
+      try {
+        const res = await api("/jobs/upload", { method: "POST", body: fd });
+        toast(res.message);
+        await loadJobs();
+        selectJob(res.jobId);
+      } catch (e) {
+        toast("上传失败: " + e.message);
+      } finally {
+        btn.disabled = false;
+      }
+    };
+
+    document.getElementById("localBtn").onclick = async () => {
+      const path = document.getElementById("localPath").value.trim();
+      if (!path) { toast("请输入路径"); return; }
+      const title = document.getElementById("titleInput").value.trim();
+      try {
+        const res = await api("/jobs/local", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ path, title: title || undefined }),
+        });
+        toast(res.message);
+        await loadJobs();
+        selectJob(res.jobId);
+      } catch (e) {
+        toast("启动失败: " + e.message);
+      }
+    };
+
+    document.getElementById("concurrencySlider").oninput = (e) => {
+      saveConcurrency(e.target.value);
+    };
+
+    (async () => {
+      await loadSettings();
+      await loadJobs();
+      const jobs = await api("/jobs?light=1");
+      const running = jobs.find(j => ["extracting","merging","synthesizing","chunking"].includes(j.progress.status));
+      if (running) selectJob(running.id);
+      else if (jobs.length) selectJob(jobs[0].id);
+    })();
+  </script>
+</body>
+</html>

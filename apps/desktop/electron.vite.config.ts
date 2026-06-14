@@ -1,3 +1,4 @@
+import { cpSync, existsSync } from 'fs'
 import { resolve } from 'path'
 import { defineConfig, externalizeDepsPlugin } from 'electron-vite'
 import react from '@vitejs/plugin-react'
@@ -8,12 +9,26 @@ const workspaceDeps = [
   '@magic-writer/shared',
   '@magic-writer/llm-gateway',
   '@magic-writer/agent-core',
-  '@magic-writer/rag'
+  '@magic-writer/rag',
+  '@magic-writer/worldview-analyzer'
 ]
+
+function copyWorldviewPublic(): { name: string; closeBundle: () => void } {
+  return {
+    name: 'copy-worldview-public',
+    closeBundle() {
+      const src = resolve(__dirname, '../../packages/worldview-analyzer/public')
+      const dest = resolve(__dirname, 'out/main/worldview-public')
+      if (existsSync(src)) {
+        cpSync(src, dest, { recursive: true })
+      }
+    }
+  }
+}
 
 export default defineConfig({
   main: {
-    plugins: [externalizeDepsPlugin({ exclude: workspaceDeps })],
+    plugins: [externalizeDepsPlugin({ exclude: workspaceDeps }), copyWorldviewPublic()],
     build: {
       rollupOptions: {
         external: ['better-sqlite3']

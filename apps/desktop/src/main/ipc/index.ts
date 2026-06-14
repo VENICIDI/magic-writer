@@ -30,6 +30,7 @@ import {
   setSetting
 } from '../storage'
 import { runAgent } from '../agents'
+import { getWorldviewUrl } from '../worldview/service'
 
 export function registerIpcHandlers(): void {
   // ---------- 系统 ----------
@@ -119,6 +120,11 @@ export function registerIpcHandlers(): void {
   ipcMain.handle('settings:set', (_e, req: { key: string; value: any }) => {
     setSetting(req.key, req.value)
     return { ok: true }
+  })
+
+  // ---------- 世界观分析 ----------
+  ipcMain.handle('worldview:getUrl', () => {
+    return getWorldviewUrl()
   })
 
   // ---------- Agent（流式） ----------

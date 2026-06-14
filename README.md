@@ -6,7 +6,7 @@ AI 驱动的桌面端小说创作工具（Electron + React + Monaco）。详细�
 
 已完成 M0 原型骨架：
 
-- ✅ pnpm monorepo：`apps/desktop` + `packages/{shared,llm-gateway,agent-core,rag}`
+- ✅ pnpm monorepo：`apps/desktop` + `packages/{shared,llm-gateway,agent-core,rag,worldview-analyzer}`
 - ✅ 主进程：Storage（JSON 占位，待接入 better-sqlite3）、IPC、LLM Gateway、Agent Orchestrator
 - ✅ Preload：类型安全的 `window.api`
 - ✅ Renderer：三栏布局（项目树 / Monaco 编辑器 / Agent 对话）、Zustand 状态、全局快捷键
@@ -23,7 +23,8 @@ magic-writer/
 │   ├── shared/                 共享类型 + IPC 契约
 │   ├── llm-gateway/            多模型适配（mock / openai 兼容协议）
 │   ├── agent-core/             Agent 编排 + prompt 模板
-│   └── rag/                    向量检索接口（含 hash-bag 占位实现）
+│   ├── rag/                    向量检索接口（含 hash-bag 占位实现）
+│   └── worldview-analyzer/     百万字小说世界观分析（LangGraph Agent）
 └── docs/design.md              产品 & 技术设计
 ```
 
@@ -32,6 +33,7 @@ magic-writer/
 ```bash
 pnpm install
 pnpm dev         # 启动 Electron（开发模式，默认 Mock LLM）
+pnpm worldview:dev  # 单独启动世界观分析 HTTP 服务（端口 8000）
 pnpm build       # 构建三进程产物到 out/
 pnpm build:mac   # 打包 dmg
 ```
@@ -60,6 +62,20 @@ pnpm dev
 ```
 
 所有 Provider 都走 OpenAI 兼容的 `/chat/completions` 流式协议。
+
+## 世界观分析
+
+桌面端顶部 Tab「世界观分析」会内嵌启动本地分析服务，支持上传 txt 小说、提取主线/世界观/角色/物品并生成报告。
+
+LLM 配置与写作模块共用设置面板中的 Provider / API Key；也可通过环境变量 `LLM_API_KEY` 或 `MW_LLM_API_KEY` 配置。
+
+独立运行（浏览器访问 `http://localhost:8000`）：
+
+```bash
+cd packages/worldview-analyzer
+cp .env.example .env   # 填入 LLM_API_KEY
+pnpm dev
+```
 
 ## 快捷键
 
