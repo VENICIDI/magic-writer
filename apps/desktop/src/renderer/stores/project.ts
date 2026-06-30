@@ -4,37 +4,12 @@ import { countWords, type Chapter, type Project, type Volume } from '@magic-writ
 let autoSaveTimer: ReturnType<typeof setTimeout> | null = null
 let statsTimer: ReturnType<typeof setTimeout> | null = null
 
-// ---------- 撤销/重做历史（模块级，避免触发额外渲染） ----------
-// 受控 textarea 会打断浏览器原生 undo，这里自建历史栈，连续输入合并为一步。
-const MAX_HISTORY = 200
-const COALESCE_MS = 500
-let undoStack: string[] = []
-let redoStack: string[] = []
-let lastEditAt = 0
-
 // 字数统计基线：用于把「净增量」累加进今日字数
+// 撤销/重做改由 Monaco 原生历史接管，这里不再维护自建历史栈。
 let lastCountedWords = 0
 
-// 程序化写入后需要恢复/跟随的光标位置（Editor 消费）
-let pendingCaret: number | null = null
-
-export function consumePendingCaret(): number | null {
-  const p = pendingCaret
-  pendingCaret = null
-  return p
-}
-
-function resetHistory(content: string): void {
-  undoStack = []
-  redoStack = []
-  lastEditAt = 0
+function resetStatsBaseline(content: string): void {
   lastCountedWords = countWords(content)
-}
-
-function pushUndo(snapshot: string): void {
-  undoStack.push(snapshot)
-  if (undoStack.length > MAX_HISTORY) undoStack.shift()
-  redoStack = []
 }
 
 function todayStr(): string {
@@ -70,15 +45,6 @@ interface ProjectState {
   openChapter: (id: string) => Promise<void>
   setContent: (content: string) => void
   saveCurrent: () => Promise<void>
-
-  // AI 流式写入（光标插入 / 选区替换）
-  beginAgentWrite: () => void
-  applyAgentEdit: (content: string, caret: number) => void
-  endAgentWrite: () => void
-
-  // 撤销/重做
-  undo: () => void
-  redo: () => void
 
   // 每日目标
   setDailyGoal: (goal: number) => void
@@ -173,7 +139,7 @@ export const useProjectStore = create<ProjectState>((set, get) => {
       }
       const res = await window.api.chapter.get(id)
       if (!res) return
-      resetHistory(res.content)
+      resetStatsBaseline(res.content)
       set({
         currentChapter: res.chapter,
         currentContent: res.content,
@@ -184,53 +150,8 @@ export const useProjectStore = create<ProjectState>((set, get) => {
     },
 
     setContent: (content) => {
-      const prev = get().currentContent
-      const now = Date.now()
-      // 连续输入合并为一步；停顿超阈值或大块变更（粘贴）时打新快照
-      if (now - lastEditAt > COALESCE_MS || Math.abs(content.length - prev.length) > 1) {
-        pushUndo(prev)
-      }
-      lastEditAt = now
-
+      // Monaco 是非受控的内容源，这里只同步状态并去抖触发字数统计/自动保存
       set({ currentContent: content, saved: false })
-      scheduleStats()
-      scheduleAutosave()
-    },
-
-    beginAgentWrite: () => {
-      // 整段 AI 写入作为一个可撤销步骤：开始时打一次快照
-      pushUndo(get().currentContent)
-    },
-
-    applyAgentEdit: (content, caret) => {
-      pendingCaret = caret
-      set({ currentContent: content, saved: false })
-      scheduleStats()
-      scheduleAutosave()
-    },
-
-    endAgentWrite: () => {
-      recomputeStats()
-    },
-
-    undo: () => {
-      if (!undoStack.length) return
-      const prev = undoStack.pop() as string
-      redoStack.push(get().currentContent)
-      pendingCaret = prev.length
-      lastEditAt = 0
-      set({ currentContent: prev, saved: false })
-      scheduleStats()
-      scheduleAutosave()
-    },
-
-    redo: () => {
-      if (!redoStack.length) return
-      const next = redoStack.pop() as string
-      undoStack.push(get().currentContent)
-      pendingCaret = next.length
-      lastEditAt = 0
-      set({ currentContent: next, saved: false })
       scheduleStats()
       scheduleAutosave()
     },

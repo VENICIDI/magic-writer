@@ -1,89 +1,200 @@
-import { useEffect, useLayoutEffect, useRef, useCallback, useState } from 'react'
-import { useProjectStore, consumePendingCaret } from '../stores/project'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import MonacoEditor, { type BeforeMount, type OnChange, type OnMount } from '@monaco-editor/react'
+import type * as MonacoNS from 'monaco-editor'
+import './../lib/monaco-setup'
+import { useProjectStore } from '../stores/project'
 import { useAgentStore } from '../stores/agent'
 import type { EditorWriter, EditorWriteMode } from '../stores/agent'
-import { ContextMenu, type MenuItem } from './ContextMenu'
+
+type MonacoApi = typeof MonacoNS
+type CodeEditor = MonacoNS.editor.IStandaloneCodeEditor
+
+/** 在 position 处插入 text 后，返回文本末尾的新位置（支持多行 delta） */
+function advancePosition(monaco: MonacoApi, start: MonacoNS.Position, text: string): MonacoNS.Position {
+  const lines = text.split('\n')
+  if (lines.length === 1) {
+    return new monaco.Position(start.lineNumber, start.column + lines[0].length)
+  }
+  const lastLen = lines[lines.length - 1].length
+  return new monaco.Position(start.lineNumber + lines.length - 1, lastLen + 1)
+}
+
+/** 注册纯正文写作主题（深/浅各一套，背景与正文区底色一致） */
+function defineThemes(monaco: MonacoApi): void {
+  monaco.editor.defineTheme('mw-dark', {
+    base: 'vs-dark',
+    inherit: true,
+    rules: [],
+    colors: {
+      'editor.background': '#050507',
+      'editor.foreground': '#d4d2ce',
+      'editorCursor.foreground': '#00d992',
+      'editor.selectionBackground': '#00d99230',
+      'editor.lineHighlightBackground': '#00000000',
+      'editor.lineHighlightBorder': '#00000000',
+      'editorIndentGuide.background': '#00000000',
+      'scrollbarSlider.background': '#4f4b4966',
+      'scrollbarSlider.hoverBackground': '#4f4b4999',
+      'scrollbarSlider.activeBackground': '#4f4b49cc'
+    }
+  })
+  monaco.editor.defineTheme('mw-light', {
+    base: 'vs',
+    inherit: true,
+    rules: [],
+    colors: {
+      'editor.background': '#ffffff',
+      'editor.foreground': '#1f1f23',
+      'editorCursor.foreground': '#00b87d',
+      'editor.selectionBackground': '#00b87d30',
+      'editor.lineHighlightBackground': '#00000000',
+      'editor.lineHighlightBorder': '#00000000',
+      'editorIndentGuide.background': '#00000000'
+    }
+  })
+}
 
 export function Editor(): React.ReactElement {
   const chapter = useProjectStore((s) => s.currentChapter)
-  const content = useProjectStore((s) => s.currentContent)
   const setContent = useProjectStore((s) => s.setContent)
   const isWritingMode = useProjectStore((s) => s.isWritingMode)
   const send = useAgentStore((s) => s.send)
 
   const titleRef = useRef<HTMLInputElement>(null)
-  const textareaRef = useRef<HTMLTextAreaElement>(null)
-  // AI 流式写入锚点：begin 时记录，write 时推进
-  const anchorRef = useRef<{ start: number; end: number } | null>(null)
-  const [ctxMenu, setCtxMenu] = useState<{ x: number; y: number; items: MenuItem[] } | null>(null)
+  const editorRef = useRef<CodeEditor | null>(null)
+  const monacoRef = useRef<MonacoApi | null>(null)
+  // AI 流式写入锚点：begin 记录写入范围，write 逐段推进
+  const anchorRef = useRef<MonacoNS.Range | null>(null)
+  // 章节上下文用 ref 暴露给 Monaco 回调（addAction / writer 注册时闭包安全）
+  const chapterRef = useRef(chapter)
+  chapterRef.current = chapter
 
-  // 暴露选区给 Agent（用于把选中文字作为上下文）
+  const [editorTheme, setEditorTheme] = useState<'mw-dark' | 'mw-light'>(() =>
+    document.documentElement.getAttribute('data-theme') === 'light' ? 'mw-light' : 'mw-dark'
+  )
+
+  // 跟随全局主题切换（data-theme）刷新编辑器主题
   useEffect(() => {
-    const w = window as unknown as { __mwGetSelection?: () => string }
-    w.__mwGetSelection = () => {
-      const ta = textareaRef.current
-      if (!ta) return ''
-      return ta.value.substring(ta.selectionStart, ta.selectionEnd)
+    const obs = new MutationObserver(() => {
+      setEditorTheme(
+        document.documentElement.getAttribute('data-theme') === 'light' ? 'mw-light' : 'mw-dark'
+      )
+    })
+    obs.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
+    return () => obs.disconnect()
+  }, [])
+
+  // 注册写入控制器与选区读取器（懒读 editorRef，跨章节重挂载仍有效）
+  useEffect(() => {
+    const win = window as unknown as {
+      __mwEditor?: EditorWriter
+      __mwGetSelection?: () => string
     }
-  })
 
-  // 注册编辑器写入控制器：光标插入 / 选区替换 + 流式推进
-  useEffect(() => {
     const writer: EditorWriter = {
       begin: (mode: EditorWriteMode) => {
-        const ta = textareaRef.current
-        const store = useProjectStore.getState()
-        // 整段 AI 写入作为一个可撤销步骤
-        store.beginAgentWrite()
-        if (!ta) {
-          // 没有 textarea 时退化为在文末插入
-          const len = store.currentContent.length
-          anchorRef.current = { start: len, end: len }
+        const editor = editorRef.current
+        const monaco = monacoRef.current
+        const model = editor?.getModel()
+        if (!editor || !monaco || !model) {
+          anchorRef.current = null
           return
         }
-        anchorRef.current =
-          mode === 'replaceSelection'
-            ? { start: ta.selectionStart, end: ta.selectionEnd }
-            : { start: ta.selectionStart, end: ta.selectionStart }
+        const sel = editor.getSelection()
+        if (mode === 'replaceSelection' && sel && !sel.isEmpty()) {
+          anchorRef.current = monaco.Range.fromPositions(sel.getStartPosition(), sel.getEndPosition())
+        } else {
+          const pos = editor.getPosition() ?? model.getPositionAt(model.getValueLength())
+          anchorRef.current = monaco.Range.fromPositions(pos, pos)
+        }
+        // 整段 AI 生成作为单个可撤销步骤：开始打一个 undo 边界
+        editor.pushUndoStop()
+        editor.focus()
       },
       write: (delta: string) => {
-        const a = anchorRef.current
-        if (!a) return
-        const cur = useProjectStore.getState().currentContent
-        const start = Math.min(a.start, cur.length)
-        const end = Math.min(a.end, cur.length)
-        const next = cur.slice(0, start) + delta + cur.slice(end)
-        const caret = start + delta.length
-        anchorRef.current = { start: caret, end: caret }
-        useProjectStore.getState().applyAgentEdit(next, caret)
+        const editor = editorRef.current
+        const monaco = monacoRef.current
+        const range = anchorRef.current
+        if (!editor || !monaco || !range) return
+        editor.executeEdits('mw-ai-write', [{ range, text: delta, forceMoveMarkers: true }])
+        const end = advancePosition(monaco, range.getStartPosition(), delta)
+        anchorRef.current = monaco.Range.fromPositions(end, end)
+        editor.setPosition(end)
+        // 流式过程跟随滚动到写入位置
+        editor.revealPositionInCenterIfOutsideViewport(end)
       },
       end: () => {
+        // 结束 undo 边界，使本次生成可一步撤销
+        editorRef.current?.pushUndoStop()
         anchorRef.current = null
-        useProjectStore.getState().endAgentWrite()
       }
     }
-    ;(window as unknown as { __mwEditor?: EditorWriter }).__mwEditor = writer
+
+    win.__mwEditor = writer
+    win.__mwGetSelection = () => {
+      const editor = editorRef.current
+      const sel = editor?.getSelection()
+      if (!editor || !sel) return ''
+      return editor.getModel()?.getValueInRange(sel) ?? ''
+    }
     return () => {
-      delete (window as unknown as { __mwEditor?: EditorWriter }).__mwEditor
+      delete win.__mwEditor
+      delete win.__mwGetSelection
     }
   }, [])
 
-  // 程序化写入/撤销后，把光标移动到目标位置并跟随滚动
-  useLayoutEffect(() => {
-    const caret = consumePendingCaret()
-    if (caret == null) return
-    const ta = textareaRef.current
-    if (!ta) return
-    const active = document.activeElement
-    const editingElsewhere =
-      active && active !== ta && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA')
-    const pos = Math.min(caret, ta.value.length)
-    // 不抢占用户正在编辑的其它输入框焦点；否则聚焦以触发滚动跟随
-    if (!editingElsewhere) ta.focus()
-    ta.setSelectionRange(pos, pos)
-  }, [content])
+  const handleBeforeMount: BeforeMount = useCallback((monaco) => {
+    defineThemes(monaco)
+  }, [])
 
-  // 标题修改 → 保存到后端
+  const handleMount: OnMount = useCallback(
+    (editor, monaco) => {
+      editorRef.current = editor
+      monacoRef.current = monaco
+
+      // 右键润色菜单：选中文字后出现「润色/扩写/缩写/改写对话/去口水话」
+      const items: Array<{ id: string; label: string; input: string }> = [
+        { id: 'mw.polish', label: '润色', input: '润色这段文字' },
+        { id: 'mw.expand', label: '扩写', input: '扩写这段文字' },
+        { id: 'mw.shorten', label: '缩写', input: '缩写这段文字' },
+        { id: 'mw.dialogue', label: '改写对话', input: '改写这段对话，让人物口吻更鲜明' },
+        { id: 'mw.dewater', label: '去口水话', input: '去除口水话，精炼这段文字' }
+      ]
+      items.forEach((item, i) => {
+        editor.addAction({
+          id: item.id,
+          label: item.label,
+          contextMenuGroupId: 'mw-ai',
+          contextMenuOrder: i,
+          // 仅在有选区时出现，等价于旧版「没选中文字不弹菜单」
+          precondition: 'editorHasSelection',
+          run: (ed) => {
+            const sel = ed.getSelection()
+            const selected = sel ? ed.getModel()?.getValueInRange(sel).trim() : ''
+            if (!selected) return
+            const ch = chapterRef.current
+            void send({
+              input: item.input,
+              projectId: ch?.projectId,
+              chapterId: ch?.id,
+              selection: selected,
+              agentType: 'polish',
+              editorMode: 'replaceSelection'
+            })
+          }
+        })
+      })
+    },
+    [send]
+  )
+
+  const handleChange: OnChange = useCallback(
+    (value) => {
+      setContent(value ?? '')
+    },
+    [setContent]
+  )
+
   const handleTitleBlur = useCallback(async () => {
     if (!chapter || !titleRef.current) return
     const newTitle = titleRef.current.value.trim()
@@ -98,6 +209,46 @@ export function Editor(): React.ReactElement {
     }
   }, [chapter])
 
+  const options = useMemo<MonacoNS.editor.IStandaloneEditorConstructionOptions>(() => {
+    const fontSize = isWritingMode ? 20 : 18
+    return {
+      fontFamily: "'LXGW WenKai', 'Noto Serif SC', 'PingFang SC', serif",
+      fontSize,
+      lineHeight: isWritingMode ? 2.2 : 2,
+      letterSpacing: fontSize * 0.07,
+      wordWrap: 'on',
+      wrappingStrategy: 'advanced',
+      lineNumbers: 'off',
+      minimap: { enabled: false },
+      folding: false,
+      glyphMargin: false,
+      lineDecorationsWidth: 0,
+      lineNumbersMinChars: 0,
+      renderLineHighlight: 'none',
+      guides: { indentation: false },
+      renderWhitespace: 'none',
+      occurrencesHighlight: 'off',
+      selectionHighlight: false,
+      matchBrackets: 'never',
+      links: false,
+      quickSuggestions: false,
+      suggestOnTriggerCharacters: false,
+      overviewRulerLanes: 0,
+      overviewRulerBorder: false,
+      hideCursorInOverviewRuler: true,
+      scrollBeyondLastLine: true,
+      cursorBlinking: 'smooth',
+      automaticLayout: true,
+      padding: { top: 24, bottom: 240 },
+      scrollbar: {
+        vertical: 'auto',
+        horizontal: 'hidden',
+        useShadows: false,
+        verticalScrollbarSize: 6
+      }
+    }
+  }, [isWritingMode])
+
   if (!chapter) {
     return (
       <main className="flex flex-1 items-center justify-center bg-surface-900 text-gray-500">
@@ -106,22 +257,19 @@ export function Editor(): React.ReactElement {
     )
   }
 
-  const projectId = chapter.projectId
-  const chapterId = chapter.id
+  // 不订阅 currentContent，避免每次输入/流式 delta 触发整个 Editor 重渲染；
+  // 章节切换由 currentChapter 触发渲染，此处取最新内容作为初始值。
+  const initialContent = useProjectStore.getState().currentContent
 
   return (
-    <main className={`flex-1 flex flex-col overflow-hidden bg-surface-900 ${isWritingMode ? 'items-center' : ''}`}>
+    <main className="flex flex-1 flex-col overflow-hidden bg-surface-900">
       <div
-        className={`flex-1 overflow-y-auto ${isWritingMode ? 'w-full max-w-[680px]' : 'w-full'}`}
-        onClick={(e) => {
-          // 点击空白区域时聚焦到正文
-          if (e.target === e.currentTarget || (e.target as HTMLElement).tagName === 'DIV') {
-            textareaRef.current?.focus()
-          }
-        }}
+        className={`flex h-full min-h-0 w-full flex-col ${
+          isWritingMode ? 'mx-auto max-w-[720px]' : ''
+        }`}
       >
-        <div className="px-8 pt-10 pb-60">
-          {/* ===== 章节标题（可编辑） ===== */}
+        {/* ===== 章节标题（可编辑，普通 input） ===== */}
+        <div className="shrink-0 px-8 pt-8">
           <input
             ref={titleRef}
             key={chapter.id + '-title'}
@@ -132,7 +280,7 @@ export function Editor(): React.ReactElement {
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
                 e.preventDefault()
-                textareaRef.current?.focus()
+                editorRef.current?.focus()
               }
             }}
             style={{
@@ -141,65 +289,23 @@ export function Editor(): React.ReactElement {
               lineHeight: '1.4'
             }}
           />
+        </div>
 
-          {/* ===== 正文（可编辑） ===== */}
-          <textarea
-            ref={textareaRef}
-            key={chapter.id + '-body'}
-            className="mt-4 w-full min-h-[60vh] resize-none bg-transparent text-base leading-8 text-gray-300 outline-none placeholder-gray-500 border-none"
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            placeholder="请输入正文"
-            onKeyDown={(e) => {
-              // 自建撤销/重做（受控 textarea 的原生 undo 不可靠）
-              if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z') {
-                e.preventDefault()
-                if (e.shiftKey) useProjectStore.getState().redo()
-                else useProjectStore.getState().undo()
-              }
-            }}
-            onContextMenu={(e) => {
-              const ta = textareaRef.current
-              if (!ta) return
-              const selected = ta.value.substring(ta.selectionStart, ta.selectionEnd).trim()
-              if (!selected) return // 没选中文字不弹菜单
-              e.preventDefault()
-              const polish = (input: string): void => {
-                void send({
-                  input,
-                  projectId,
-                  chapterId,
-                  selection: selected,
-                  agentType: 'polish',
-                  editorMode: 'replaceSelection'
-                })
-              }
-              setCtxMenu({
-                x: e.clientX,
-                y: e.clientY,
-                items: [
-                  { label: '润色', action: () => polish('润色这段文字') },
-                  { label: '扩写', action: () => polish('扩写这段文字') },
-                  { label: '缩写', action: () => polish('缩写这段文字') },
-                  { label: '改写对话', action: () => polish('改写这段对话，让人物口吻更鲜明') },
-                  { label: '去口水话', action: () => polish('去除口水话，精炼这段文字') }
-                ]
-              })
-            }}
-            style={{
-              fontFamily: "'LXGW WenKai', 'Noto Serif SC', 'PingFang SC', serif",
-              fontSize: isWritingMode ? '20px' : '18px',
-              lineHeight: isWritingMode ? '2.2' : '2',
-              paddingLeft: '2em',
-              letterSpacing: '0.07em'
-            }}
+        {/* ===== 正文（Monaco） ===== */}
+        <div className="min-h-0 flex-1 px-6 pt-2">
+          <MonacoEditor
+            key={chapter.id}
+            defaultValue={initialContent}
+            language="plaintext"
+            theme={editorTheme}
+            options={options}
+            beforeMount={handleBeforeMount}
+            onMount={handleMount}
+            onChange={handleChange}
+            loading={<div className="px-8 pt-8 text-gray-500">正在加载编辑器…</div>}
           />
         </div>
       </div>
-
-      {ctxMenu && (
-        <ContextMenu x={ctxMenu.x} y={ctxMenu.y} items={ctxMenu.items} onClose={() => setCtxMenu(null)} />
-      )}
     </main>
   )
 }
