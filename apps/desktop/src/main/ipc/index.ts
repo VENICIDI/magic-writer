@@ -3,8 +3,14 @@ import {
   IPC,
   type AgentRunRequest,
   type ChapterSaveRequest,
+  type Entity,
+  type EntityListRequest,
+  type EntityDeleteRequest,
+  type EntityRelation,
   type LLMStreamChunk,
-  type ProjectCreateRequest
+  type ProjectCreateRequest,
+  type RelationDeleteRequest,
+  type RelationListRequest
 } from '@magic-writer/shared'
 import {
   createChapter,
@@ -26,6 +32,13 @@ import {
   deleteCharacter,
   listForeshadowing,
   upsertForeshadowing,
+  listEntities,
+  getEntity,
+  upsertEntity,
+  deleteEntity,
+  listRelations,
+  upsertRelation,
+  deleteRelation,
   getSetting,
   setSetting
 } from '../storage'
@@ -111,6 +124,45 @@ export function registerIpcHandlers(): void {
   })
   ipcMain.handle('world:foreshadowing:upsert', (_e, item: any) => {
     return upsertForeshadowing(item)
+  })
+
+  // ---------- 统一实体 ----------
+  ipcMain.handle(IPC.EntityList, (_e, req: EntityListRequest) => {
+    return listEntities(req.projectId, req.type)
+  })
+  ipcMain.handle(IPC.EntityGet, (_e, id: string) => {
+    return getEntity(id)
+  })
+  ipcMain.handle(IPC.EntityUpsert, (_e, entity: Partial<Entity> & { projectId: string; type: Entity['type'] }) => {
+    return upsertEntity(entity)
+  })
+  ipcMain.handle(IPC.EntityDelete, (_e, req: EntityDeleteRequest) => {
+    deleteEntity(req.id)
+    return { ok: true }
+  })
+
+  // ---------- 统一关系 ----------
+  ipcMain.handle(IPC.RelationList, (_e, req: RelationListRequest) => {
+    return listRelations(req.projectId, { entityId: req.entityId })
+  })
+  ipcMain.handle(
+    IPC.RelationUpsert,
+    (
+      _e,
+      relation: Partial<EntityRelation> & {
+        projectId: string
+        fromId: string
+        fromType: EntityRelation['fromType']
+        toId: string
+        toType: EntityRelation['toType']
+      }
+    ) => {
+      return upsertRelation(relation)
+    }
+  )
+  ipcMain.handle(IPC.RelationDelete, (_e, req: RelationDeleteRequest) => {
+    deleteRelation(req.id)
+    return { ok: true }
   })
 
   // ---------- 设置 ----------

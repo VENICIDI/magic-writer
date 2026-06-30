@@ -10,12 +10,23 @@ import { join } from 'path'
 import type {
   Chapter,
   Character,
+  Entity,
   Foreshadowing,
   Project,
   Volume
 } from '@magic-writer/shared'
 import { getDB, getDataDir } from './database'
 import { indexChapter } from '../agents/rag-engine'
+import {
+  deleteEntity,
+  deleteRelationsFrom,
+  listEntities,
+  listRelations,
+  upsertEntity,
+  upsertRelation
+} from './entities'
+
+export * from './entities'
 
 // ============================================================
 // 项目
@@ -242,61 +253,80 @@ function rowToChapter(row: any): Chapter {
 // 人物卡
 // ============================================================
 
+// 人物现已统一存储于 entities 表（type='character'），relations 拆入 entity_relations。
+// 以下函数作为「统一实体层」的适配器，保持原有 Character 视图与 IPC 行为不变。
+
 export function listCharacters(projectId: string): Character[] {
-  const db = getDB()
-  const rows = db.prepare('SELECT * FROM characters WHERE project_id = ?').all(projectId) as any[]
-  return rows.map(rowToCharacter)
+  const entities = listEntities(projectId, 'character')
+  const relations = listRelations(projectId)
+  return entities.map((e) => entityToCharacter(e, relations.filter((r) => r.fromId === e.id)))
 }
 
 export function upsertCharacter(character: Character): Character {
-  const db = getDB()
-  db.prepare(`
-    INSERT INTO characters (id, project_id, name, aliases, age, appearance, personality, abilities, relations, first_appear_chapter_id, locked_fields)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    ON CONFLICT(id) DO UPDATE SET
-      name = excluded.name,
-      aliases = excluded.aliases,
-      age = excluded.age,
-      appearance = excluded.appearance,
-      personality = excluded.personality,
-      abilities = excluded.abilities,
-      relations = excluded.relations,
-      first_appear_chapter_id = excluded.first_appear_chapter_id,
-      locked_fields = excluded.locked_fields
-  `).run(
-    character.id,
-    character.projectId,
-    character.name,
-    JSON.stringify(character.aliases),
-    character.age ?? null,
-    character.appearance,
-    character.personality,
-    JSON.stringify(character.abilities),
-    JSON.stringify(character.relations),
-    character.firstAppearChapterId ?? null,
-    JSON.stringify(character.lockedFields)
-  )
+  const data = {
+    aliases: character.aliases,
+    age: character.age,
+    appearance: character.appearance,
+    personality: character.personality,
+    abilities: character.abilities,
+    firstAppearChapterId: character.firstAppearChapterId,
+    lockedFields: character.lockedFields
+  }
+  upsertEntity({
+    id: character.id,
+    projectId: character.projectId,
+    type: 'character',
+    name: character.name,
+    summary: character.personality,
+    data
+  })
+
+  // 同步人物卡的出向关系到统一关系表（人物卡「拥有」其 relations 列表）
+  deleteRelationsFrom(character.id)
+  for (const rel of character.relations) {
+    upsertRelation({
+      projectId: character.projectId,
+      fromId: character.id,
+      fromType: 'character',
+      toId: rel.targetId,
+      toType: 'character',
+      type: rel.type,
+      note: rel.note
+    })
+  }
+
   return character
 }
 
 export function deleteCharacter(id: string): void {
-  const db = getDB()
-  db.prepare('DELETE FROM characters WHERE id = ?').run(id)
+  deleteEntity(id)
 }
 
-function rowToCharacter(row: any): Character {
+function entityToCharacter(
+  e: Entity,
+  outgoing: Array<{ toId: string; type: string; note: string }>
+): Character {
+  const data = e.data as {
+    aliases?: string[]
+    age?: number
+    appearance?: string
+    personality?: string
+    abilities?: string[]
+    firstAppearChapterId?: string
+    lockedFields?: string[]
+  }
   return {
-    id: row.id,
-    projectId: row.project_id,
-    name: row.name,
-    aliases: JSON.parse(row.aliases),
-    age: row.age ?? undefined,
-    appearance: row.appearance,
-    personality: row.personality,
-    abilities: JSON.parse(row.abilities),
-    relations: JSON.parse(row.relations),
-    firstAppearChapterId: row.first_appear_chapter_id ?? undefined,
-    lockedFields: JSON.parse(row.locked_fields)
+    id: e.id,
+    projectId: e.projectId,
+    name: e.name,
+    aliases: data.aliases ?? [],
+    age: data.age,
+    appearance: data.appearance ?? '',
+    personality: data.personality ?? '',
+    abilities: data.abilities ?? [],
+    relations: outgoing.map((r) => ({ targetId: r.toId, type: r.type, note: r.note })),
+    firstAppearChapterId: data.firstAppearChapterId,
+    lockedFields: data.lockedFields ?? []
   }
 }
 
@@ -304,41 +334,41 @@ function rowToCharacter(row: any): Character {
 // 伏笔
 // ============================================================
 
+// 伏笔现已统一存储于 entities 表（type='foreshadowing'），plantedAt/resolvedAt/status 存于 data。
+
 export function listForeshadowing(projectId: string): Foreshadowing[] {
-  const db = getDB()
-  const rows = db.prepare('SELECT * FROM foreshadowing WHERE project_id = ?').all(projectId) as any[]
-  return rows.map(rowToForeshadowing)
+  return listEntities(projectId, 'foreshadowing').map(entityToForeshadowing)
 }
 
 export function upsertForeshadowing(item: Foreshadowing): Foreshadowing {
-  const db = getDB()
-  db.prepare(`
-    INSERT INTO foreshadowing (id, project_id, description, planted_at, resolved_at, status)
-    VALUES (?, ?, ?, ?, ?, ?)
-    ON CONFLICT(id) DO UPDATE SET
-      description = excluded.description,
-      planted_at = excluded.planted_at,
-      resolved_at = excluded.resolved_at,
-      status = excluded.status
-  `).run(
-    item.id,
-    item.projectId,
-    item.description,
-    JSON.stringify(item.plantedAt),
-    item.resolvedAt ? JSON.stringify(item.resolvedAt) : null,
-    item.status
-  )
+  upsertEntity({
+    id: item.id,
+    projectId: item.projectId,
+    type: 'foreshadowing',
+    name: item.description,
+    summary: item.description,
+    data: {
+      plantedAt: item.plantedAt,
+      resolvedAt: item.resolvedAt,
+      status: item.status
+    }
+  })
   return item
 }
 
-function rowToForeshadowing(row: any): Foreshadowing {
+function entityToForeshadowing(e: Entity): Foreshadowing {
+  const data = e.data as {
+    plantedAt?: { chapterId: string; offset: number }
+    resolvedAt?: { chapterId: string; offset: number }
+    status?: Foreshadowing['status']
+  }
   return {
-    id: row.id,
-    projectId: row.project_id,
-    description: row.description,
-    plantedAt: JSON.parse(row.planted_at),
-    resolvedAt: row.resolved_at ? JSON.parse(row.resolved_at) : undefined,
-    status: row.status
+    id: e.id,
+    projectId: e.projectId,
+    description: e.name,
+    plantedAt: data.plantedAt ?? { chapterId: '', offset: 0 },
+    resolvedAt: data.resolvedAt,
+    status: data.status ?? 'pending'
   }
 }
 
@@ -402,6 +432,9 @@ export function setSetting<T>(key: string, value: T): void {
 
 export function ensureSeedData(): void {
   const db = getDB()
+  // 先把旧版 characters/foreshadowing 存量数据迁移到统一实体表（幂等）
+  migrateLegacyEntities()
+
   const count = (db.prepare('SELECT COUNT(*) as c FROM projects').get() as any).c
   if (count > 0) return
 
@@ -456,20 +489,82 @@ export function ensureSeedData(): void {
     }
   }
 
-  // 创建示例人物卡
-  db.prepare(`
-    INSERT INTO characters (id, project_id, name, aliases, age, appearance, personality, abilities, relations, locked_fields)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `).run(
-    'char-1', projectId, '萧远',
-    JSON.stringify(['远哥', '萧师兄']),
-    18,
-    '身形修长，面容清秀，目光深邃如含星辰',
-    '沉稳内敛，外冷内热，前世阅稿万卷赋予他对情节走向的敏锐直觉',
-    JSON.stringify(['阅稿万卷之眼', '寒冰剑诀']),
-    JSON.stringify([]),
-    JSON.stringify(['personality'])
-  )
+  // 创建示例人物卡（写入统一实体表）
+  upsertCharacter({
+    id: 'char-1',
+    projectId,
+    name: '萧远',
+    aliases: ['远哥', '萧师兄'],
+    age: 18,
+    appearance: '身形修长，面容清秀，目光深邃如含星辰',
+    personality: '沉稳内敛，外冷内热，前世阅稿万卷赋予他对情节走向的敏锐直觉',
+    abilities: ['阅稿万卷之眼', '寒冰剑诀'],
+    relations: [],
+    lockedFields: ['personality']
+  })
+}
+
+// ============================================================
+// 旧版实体数据迁移（characters / foreshadowing -> entities）
+// ============================================================
+
+export function migrateLegacyEntities(): void {
+  const db = getDB()
+  if (getSetting('legacy_entities_migrated', false)) return
+
+  // 旧 characters 表 -> entities(type='character') + entity_relations
+  if (legacyTableExists('characters')) {
+    const rows = db.prepare('SELECT * FROM characters').all() as any[]
+    for (const row of rows) {
+      upsertCharacter({
+        id: row.id,
+        projectId: row.project_id,
+        name: row.name,
+        aliases: safeJSON(row.aliases, []),
+        age: row.age ?? undefined,
+        appearance: row.appearance ?? '',
+        personality: row.personality ?? '',
+        abilities: safeJSON(row.abilities, []),
+        relations: safeJSON(row.relations, []),
+        firstAppearChapterId: row.first_appear_chapter_id ?? undefined,
+        lockedFields: safeJSON(row.locked_fields, [])
+      })
+    }
+  }
+
+  // 旧 foreshadowing 表 -> entities(type='foreshadowing')
+  if (legacyTableExists('foreshadowing')) {
+    const rows = db.prepare('SELECT * FROM foreshadowing').all() as any[]
+    for (const row of rows) {
+      upsertForeshadowing({
+        id: row.id,
+        projectId: row.project_id,
+        description: row.description,
+        plantedAt: safeJSON(row.planted_at, { chapterId: '', offset: 0 }),
+        resolvedAt: row.resolved_at ? safeJSON(row.resolved_at, undefined) : undefined,
+        status: row.status ?? 'pending'
+      })
+    }
+  }
+
+  setSetting('legacy_entities_migrated', true)
+}
+
+function legacyTableExists(name: string): boolean {
+  const db = getDB()
+  const row = db
+    .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name = ?")
+    .get(name)
+  return !!row
+}
+
+function safeJSON<T>(value: unknown, fallback: T): T {
+  if (typeof value !== 'string') return fallback
+  try {
+    return JSON.parse(value) as T
+  } catch {
+    return fallback
+  }
 }
 
 // ============================================================

@@ -7,6 +7,9 @@ import {
   type Chapter,
   type Character,
   type ChapterSaveRequest,
+  type Entity,
+  type EntityRelation,
+  type EntityType,
   type LLMStreamChunk,
   type Project,
   type ProjectCreateRequest,
@@ -73,6 +76,31 @@ const api = {
       ipcRenderer.invoke('world:character:upsert', character),
     deleteCharacter: (id: string): Promise<{ ok: boolean }> =>
       ipcRenderer.invoke('world:character:delete', id)
+  },
+  entity: {
+    list: (projectId: string, type?: EntityType): Promise<Entity[]> =>
+      ipcRenderer.invoke(IPC.EntityList, { projectId, type }),
+    get: (id: string): Promise<Entity | null> => ipcRenderer.invoke(IPC.EntityGet, id),
+    upsert: (
+      entity: Partial<Entity> & { projectId: string; type: EntityType }
+    ): Promise<Entity> => ipcRenderer.invoke(IPC.EntityUpsert, entity),
+    delete: (id: string): Promise<{ ok: boolean }> =>
+      ipcRenderer.invoke(IPC.EntityDelete, { id })
+  },
+  relation: {
+    list: (projectId: string, entityId?: string): Promise<EntityRelation[]> =>
+      ipcRenderer.invoke(IPC.RelationList, { projectId, entityId }),
+    upsert: (
+      relation: Partial<EntityRelation> & {
+        projectId: string
+        fromId: string
+        fromType: EntityType
+        toId: string
+        toType: EntityType
+      }
+    ): Promise<EntityRelation> => ipcRenderer.invoke(IPC.RelationUpsert, relation),
+    delete: (id: string): Promise<{ ok: boolean }> =>
+      ipcRenderer.invoke(IPC.RelationDelete, { id })
   },
   worldview: {
     getUrl: (): Promise<string | null> => ipcRenderer.invoke('worldview:getUrl')

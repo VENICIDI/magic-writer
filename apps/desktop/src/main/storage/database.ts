@@ -136,6 +136,41 @@ function migrate(db: Database.Database): void {
           tokenize='unicode61'
         );
       `
+    },
+    {
+      version: 3,
+      sql: `
+        -- 统一多态实体表（人物/事件/地点/道具/伏笔等）
+        CREATE TABLE IF NOT EXISTS entities (
+          id          TEXT PRIMARY KEY,
+          project_id  TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+          type        TEXT NOT NULL,
+          name        TEXT NOT NULL DEFAULT '',
+          summary     TEXT NOT NULL DEFAULT '',
+          data        TEXT NOT NULL DEFAULT '{}',
+          tags        TEXT NOT NULL DEFAULT '[]',
+          sort_order  INTEGER NOT NULL DEFAULT 0,
+          created_at  INTEGER NOT NULL,
+          updated_at  INTEGER NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS idx_entities_project_type ON entities(project_id, type);
+
+        -- 统一关系表（连接任意实体，也可引用章节）
+        CREATE TABLE IF NOT EXISTS entity_relations (
+          id          TEXT PRIMARY KEY,
+          project_id  TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+          from_id     TEXT NOT NULL,
+          from_type   TEXT NOT NULL,
+          to_id       TEXT NOT NULL,
+          to_type     TEXT NOT NULL,
+          type        TEXT NOT NULL DEFAULT '',
+          note        TEXT NOT NULL DEFAULT '',
+          created_at  INTEGER NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS idx_relations_project ON entity_relations(project_id);
+        CREATE INDEX IF NOT EXISTS idx_relations_from ON entity_relations(from_id);
+        CREATE INDEX IF NOT EXISTS idx_relations_to ON entity_relations(to_id);
+      `
     }
   ]
 
