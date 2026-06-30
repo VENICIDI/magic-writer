@@ -8,6 +8,7 @@ import { CommandPalette } from './components/CommandPalette'
 import { SettingsPanel } from './components/SettingsPanel'
 import { WorldviewAnalyzerView } from './components/WorldviewAnalyzerView'
 import { KnowledgeGraph } from './components/KnowledgeGraph'
+import { MapView } from './components/MapView'
 import { useProjectStore } from './stores/project'
 import { useAgentStore } from './stores/agent'
 import { useTheme } from './hooks/useTheme'
@@ -25,9 +26,9 @@ function App(): React.ReactElement {
   const ensureListener = useAgentStore((s) => s.ensureListener)
   const { theme, setTheme } = useTheme()
 
-  const [activePage, setActivePage] = useState<'library' | 'workspace' | 'worldview' | 'graph'>(
-    'library'
-  )
+  const [activePage, setActivePage] = useState<
+    'library' | 'workspace' | 'worldview' | 'graph' | 'map'
+  >('library')
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
 
@@ -123,6 +124,25 @@ function App(): React.ReactElement {
           </button>
         )}
 
+        {/* Tab: 地图（仅有打开项目时显示） */}
+        {currentProject && (
+          <button
+            className={`titlebar-no-drag flex items-center gap-1.5 px-3 h-full text-sm border-r border-surface-600 transition-colors ${
+              activePage === 'map'
+                ? 'bg-surface-900 text-gray-200'
+                : 'text-gray-500 hover:text-gray-300'
+            }`}
+            onClick={() => setActivePage('map')}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M14.106 5.553a2 2 0 0 0 1.788 0l3.659-1.83A1 1 0 0 1 21 4.619v12.764a1 1 0 0 1-.553.894l-4.553 2.277a2 2 0 0 1-1.788 0l-4.212-2.106a2 2 0 0 0-1.788 0l-3.659 1.83A1 1 0 0 1 3 19.381V6.618a1 1 0 0 1 .553-.894l4.553-2.277a2 2 0 0 1 1.788 0z" />
+              <path d="M15 5.764v15" />
+              <path d="M9 3.236v15" />
+            </svg>
+            地图
+          </button>
+        )}
+
         {/* Tab: 当前作品（仅有打开项目时显示） */}
         {currentProject && (
           <button
@@ -182,6 +202,8 @@ function App(): React.ReactElement {
           <WorldviewAnalyzerView />
         ) : activePage === 'graph' ? (
           <KnowledgeGraph />
+        ) : activePage === 'map' ? (
+          <MapView />
         ) : (
           <div className="flex flex-1 overflow-hidden">
             {!isWritingMode && sidebarVisible && <Sidebar />}

@@ -118,6 +118,19 @@ const api = {
   worldview: {
     getUrl: (): Promise<string | null> => ipcRenderer.invoke('worldview:getUrl')
   },
+  map: {
+    // 保存底图：dataBase64 为去掉 data:URL 前缀的纯 base64
+    saveImage: (req: {
+      projectId: string
+      dataBase64: string
+      ext: string
+    }): Promise<{ fileName: string }> => ipcRenderer.invoke('map:saveImage', req),
+    // 读取底图，返回可直接用于 <img src> 的 data:URL（不存在为 null）
+    readImage: (fileName: string): Promise<{ dataUrl: string | null }> =>
+      ipcRenderer.invoke('map:readImage', fileName),
+    deleteImage: (fileName: string): Promise<{ ok: boolean }> =>
+      ipcRenderer.invoke('map:deleteImage', fileName)
+  },
   settings: {
     get: <T>(key: string, defaultValue: T): Promise<T> =>
       ipcRenderer.invoke('settings:get', { key, defaultValue }),

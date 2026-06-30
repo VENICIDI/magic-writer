@@ -312,6 +312,74 @@ export function IconFilter({ className, size }: IconProps) {
   )
 }
 
+/** 地图 - 折叠地图（用于「地图」顶部 Tab） */
+export function IconMap({ className, size }: IconProps) {
+  return (
+    <Icon className={className} size={size}>
+      <path d="M14.106 5.553a2 2 0 0 0 1.788 0l3.659-1.83A1 1 0 0 1 21 4.619v12.764a1 1 0 0 1-.553.894l-4.553 2.277a2 2 0 0 1-1.788 0l-4.212-2.106a2 2 0 0 0-1.788 0l-3.659 1.83A1 1 0 0 1 3 19.381V6.618a1 1 0 0 1 .553-.894l4.553-2.277a2 2 0 0 1 1.788 0z" />
+      <path d="M15 5.764v15" />
+      <path d="M9 3.236v15" />
+    </Icon>
+  )
+}
+
+/** 上传 - 云上传 */
+export function IconUpload({ className, size }: IconProps) {
+  return (
+    <Icon className={className} size={size}>
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+      <path d="M17 8l-5-5-5 5" />
+      <path d="M12 3v12" />
+    </Icon>
+  )
+}
+
+/** 图片 - 相片 */
+export function IconImage({ className, size }: IconProps) {
+  return (
+    <Icon className={className} size={size}>
+      <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
+      <circle cx="9" cy="9" r="2" />
+      <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
+    </Icon>
+  )
+}
+
+/** 放大镜+ */
+export function IconZoomIn({ className, size }: IconProps) {
+  return (
+    <Icon className={className} size={size}>
+      <circle cx="11" cy="11" r="8" />
+      <path d="m21 21-4.3-4.3" />
+      <path d="M11 8v6" />
+      <path d="M8 11h6" />
+    </Icon>
+  )
+}
+
+/** 放大镜- */
+export function IconZoomOut({ className, size }: IconProps) {
+  return (
+    <Icon className={className} size={size}>
+      <circle cx="11" cy="11" r="8" />
+      <path d="m21 21-4.3-4.3" />
+      <path d="M8 11h6" />
+    </Icon>
+  )
+}
+
+/** 复位/最大化适配 */
+export function IconMaximize({ className, size }: IconProps) {
+  return (
+    <Icon className={className} size={size}>
+      <path d="M8 3H5a2 2 0 0 0-2 2v3" />
+      <path d="M21 8V5a2 2 0 0 0-2-2h-3" />
+      <path d="M3 16v3a2 2 0 0 0 2 2h3" />
+      <path d="M16 21h3a2 2 0 0 0 2-2v-3" />
+    </Icon>
+  )
+}
+
 /** 星光/sparkles */
 export function IconSparkles({ className, size }: IconProps) {
   return (

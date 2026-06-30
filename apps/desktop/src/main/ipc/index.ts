@@ -43,7 +43,10 @@ import {
   upsertRelation,
   deleteRelation,
   getSetting,
-  setSetting
+  setSetting,
+  saveMapImage,
+  readMapImage,
+  deleteMapImage
 } from '../storage'
 import { runAgent } from '../agents'
 import { generateEntity } from '../agents/entity-generator'
@@ -190,6 +193,21 @@ export function registerIpcHandlers(): void {
   // ---------- 世界观分析 ----------
   ipcMain.handle('worldview:getUrl', () => {
     return getWorldviewUrl()
+  })
+
+  // ---------- 地图底图（图片落盘 / 读取 / 删除） ----------
+  ipcMain.handle(
+    'map:saveImage',
+    (_e, req: { projectId: string; dataBase64: string; ext: string }) => {
+      return saveMapImage(req.projectId, req.dataBase64, req.ext)
+    }
+  )
+  ipcMain.handle('map:readImage', (_e, fileName: string) => {
+    return { dataUrl: readMapImage(fileName) }
+  })
+  ipcMain.handle('map:deleteImage', (_e, fileName: string) => {
+    deleteMapImage(fileName)
+    return { ok: true }
   })
 
   // ---------- Agent（流式） ----------

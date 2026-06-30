@@ -110,6 +110,10 @@ export interface LocationData {
   region?: string
   description?: string
   significance?: string
+  // 在「地图」底图上的归一化坐标（0~1，相对底图宽高），缺省表示尚未放置到地图上。
+  // 用归一化比例而非像素，缩放/窗口变化时图钉位置不会错位。
+  mapX?: number
+  mapY?: number
 }
 
 export interface PropData {
