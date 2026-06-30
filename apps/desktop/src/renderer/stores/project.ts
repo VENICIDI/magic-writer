@@ -1,7 +1,48 @@
 import { create } from 'zustand'
-import type { Chapter, Project, Volume } from '@magic-writer/shared'
+import { countWords, type Chapter, type Project, type Volume } from '@magic-writer/shared'
 
 let autoSaveTimer: ReturnType<typeof setTimeout> | null = null
+let statsTimer: ReturnType<typeof setTimeout> | null = null
+
+// ---------- 撤销/重做历史（模块级，避免触发额外渲染） ----------
+// 受控 textarea 会打断浏览器原生 undo，这里自建历史栈，连续输入合并为一步。
+const MAX_HISTORY = 200
+const COALESCE_MS = 500
+let undoStack: string[] = []
+let redoStack: string[] = []
+let lastEditAt = 0
+
+// 字数统计基线：用于把「净增量」累加进今日字数
+let lastCountedWords = 0
+
+// 程序化写入后需要恢复/跟随的光标位置（Editor 消费）
+let pendingCaret: number | null = null
+
+export function consumePendingCaret(): number | null {
+  const p = pendingCaret
+  pendingCaret = null
+  return p
+}
+
+function resetHistory(content: string): void {
+  undoStack = []
+  redoStack = []
+  lastEditAt = 0
+  lastCountedWords = countWords(content)
+}
+
+function pushUndo(snapshot: string): void {
+  undoStack.push(snapshot)
+  if (undoStack.length > MAX_HISTORY) undoStack.shift()
+  redoStack = []
+}
+
+function todayStr(): string {
+  const d = new Date()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${d.getFullYear()}-${m}-${day}`
+}
 
 interface ProjectState {
   // 数据
@@ -11,7 +52,9 @@ interface ProjectState {
   chapters: Chapter[]
   currentChapter: Chapter | null
   currentContent: string
+  wordCount: number
   saved: boolean
+  saveError: string | null
 
   // UI
   sidebarVisible: boolean
@@ -19,6 +62,7 @@ interface ProjectState {
   isWritingMode: boolean
   dailyGoal: number
   dailyWordCount: number
+  dailyDate: string
 
   // 动作
   bootstrap: () => Promise<void>
@@ -26,105 +70,201 @@ interface ProjectState {
   openChapter: (id: string) => Promise<void>
   setContent: (content: string) => void
   saveCurrent: () => Promise<void>
-  appendToChapter: (delta: string) => void
+
+  // AI 流式写入（光标插入 / 选区替换）
+  beginAgentWrite: () => void
+  applyAgentEdit: (content: string, caret: number) => void
+  endAgentWrite: () => void
+
+  // 撤销/重做
+  undo: () => void
+  redo: () => void
+
+  // 每日目标
+  setDailyGoal: (goal: number) => void
 
   toggleSidebar: () => void
   toggleAgentPanel: () => void
   toggleWritingMode: () => void
 }
 
-function countWords(text: string): number {
-  const zh = (text.match(/[\u4e00-\u9fff]/g) ?? []).length
-  const en = (text.match(/[a-zA-Z]+/g) ?? []).length
-  return zh + en
-}
+export const useProjectStore = create<ProjectState>((set, get) => {
+  /** 去抖重算字数与今日进度，避免每次按键全量重算 */
+  function scheduleStats(): void {
+    if (statsTimer) clearTimeout(statsTimer)
+    statsTimer = setTimeout(() => recomputeStats(), 400)
+  }
 
-export const useProjectStore = create<ProjectState>((set, get) => ({
-  projects: [],
-  currentProject: null,
-  volumes: [],
-  chapters: [],
-  currentChapter: null,
-  currentContent: '',
-  saved: true,
+  function recomputeStats(): void {
+    const words = countWords(get().currentContent)
+    const delta = words - lastCountedWords
+    lastCountedWords = words
+    const today = todayStr()
+    set((s) => {
+      const base = s.dailyDate === today ? s.dailyWordCount : 0
+      const dailyWordCount = Math.max(0, base + delta)
+      void window.api.settings.set('daily.count', dailyWordCount)
+      void window.api.settings.set('daily.date', today)
+      return { wordCount: words, dailyWordCount, dailyDate: today }
+    })
+  }
 
-  sidebarVisible: true,
-  agentPanelVisible: true,
-  isWritingMode: false,
-  dailyGoal: 5000,
-  dailyWordCount: 0,
-
-  bootstrap: async () => {
-    const { projects } = await window.api.project.list()
-    set({ projects })
-    const first = projects[0]
-    if (first) {
-      await get().openProject(first.id)
-    }
-  },
-
-  openProject: async (id) => {
-    const project = await window.api.project.get(id)
-    if (!project) return
-    const { volumes, chapters } = await window.api.chapter.list(id)
-    set({ currentProject: project, volumes, chapters })
-    const first = chapters[0]
-    if (first) await get().openChapter(first.id)
-  },
-
-  openChapter: async (id) => {
-    // 保存当前章节再切换
-    if (!get().saved) {
-      await get().saveCurrent()
-    }
-    const res = await window.api.chapter.get(id)
-    if (!res) return
-    set({ currentChapter: res.chapter, currentContent: res.content, saved: true })
-  },
-
-  setContent: (content) => {
-    const prevWords = countWords(get().currentContent)
-    const newWords = countWords(content)
-    const delta = Math.max(0, newWords - prevWords)
-
-    set((s) => ({
-      currentContent: content,
-      saved: false,
-      dailyWordCount: s.dailyWordCount + delta
-    }))
-
-    // 自动保存（2 秒无输入后触发）
+  function scheduleAutosave(): void {
     if (autoSaveTimer) clearTimeout(autoSaveTimer)
     autoSaveTimer = setTimeout(() => {
-      get().saveCurrent()
+      void get().saveCurrent()
     }, 2000)
-  },
+  }
 
-  appendToChapter: (delta) => {
-    set((s) => ({
-      currentContent: s.currentContent + delta,
-      saved: false,
-      dailyWordCount: s.dailyWordCount + countWords(delta)
-    }))
-  },
+  return {
+    projects: [],
+    currentProject: null,
+    volumes: [],
+    chapters: [],
+    currentChapter: null,
+    currentContent: '',
+    wordCount: 0,
+    saved: true,
+    saveError: null,
 
-  saveCurrent: async () => {
-    const { currentChapter, currentContent } = get()
-    if (!currentChapter) return
-    const updated = await window.api.chapter.save({
-      chapterId: currentChapter.id,
-      content: currentContent
-    })
-    if (updated) {
-      set((s) => ({
-        currentChapter: updated,
+    sidebarVisible: true,
+    agentPanelVisible: true,
+    isWritingMode: false,
+    dailyGoal: 5000,
+    dailyWordCount: 0,
+    dailyDate: todayStr(),
+
+    bootstrap: async () => {
+      const { projects } = await window.api.project.list()
+      set({ projects })
+
+      // 加载每日目标与今日进度（跨天自动归零、重启保留当天进度）
+      const dailyGoal = await window.api.settings.get('daily.goal', 5000)
+      const savedDate = await window.api.settings.get('daily.date', '')
+      const savedCount = await window.api.settings.get('daily.count', 0)
+      const today = todayStr()
+      if (savedDate === today) {
+        set({ dailyGoal, dailyDate: today, dailyWordCount: savedCount })
+      } else {
+        set({ dailyGoal, dailyDate: today, dailyWordCount: 0 })
+        void window.api.settings.set('daily.date', today)
+        void window.api.settings.set('daily.count', 0)
+      }
+
+      const first = projects[0]
+      if (first) {
+        await get().openProject(first.id)
+      }
+    },
+
+    openProject: async (id) => {
+      const project = await window.api.project.get(id)
+      if (!project) return
+      const { volumes, chapters } = await window.api.chapter.list(id)
+      set({ currentProject: project, volumes, chapters })
+      const first = chapters[0]
+      if (first) await get().openChapter(first.id)
+    },
+
+    openChapter: async (id) => {
+      // 保存当前章节再切换
+      if (!get().saved) {
+        await get().saveCurrent()
+      }
+      const res = await window.api.chapter.get(id)
+      if (!res) return
+      resetHistory(res.content)
+      set({
+        currentChapter: res.chapter,
+        currentContent: res.content,
+        wordCount: countWords(res.content),
         saved: true,
-        chapters: s.chapters.map((c) => (c.id === updated.id ? updated : c))
-      }))
-    }
-  },
+        saveError: null
+      })
+    },
 
-  toggleSidebar: () => set((s) => ({ sidebarVisible: !s.sidebarVisible })),
-  toggleAgentPanel: () => set((s) => ({ agentPanelVisible: !s.agentPanelVisible })),
-  toggleWritingMode: () => set((s) => ({ isWritingMode: !s.isWritingMode }))
-}))
+    setContent: (content) => {
+      const prev = get().currentContent
+      const now = Date.now()
+      // 连续输入合并为一步；停顿超阈值或大块变更（粘贴）时打新快照
+      if (now - lastEditAt > COALESCE_MS || Math.abs(content.length - prev.length) > 1) {
+        pushUndo(prev)
+      }
+      lastEditAt = now
+
+      set({ currentContent: content, saved: false })
+      scheduleStats()
+      scheduleAutosave()
+    },
+
+    beginAgentWrite: () => {
+      // 整段 AI 写入作为一个可撤销步骤：开始时打一次快照
+      pushUndo(get().currentContent)
+    },
+
+    applyAgentEdit: (content, caret) => {
+      pendingCaret = caret
+      set({ currentContent: content, saved: false })
+      scheduleStats()
+      scheduleAutosave()
+    },
+
+    endAgentWrite: () => {
+      recomputeStats()
+    },
+
+    undo: () => {
+      if (!undoStack.length) return
+      const prev = undoStack.pop() as string
+      redoStack.push(get().currentContent)
+      pendingCaret = prev.length
+      lastEditAt = 0
+      set({ currentContent: prev, saved: false })
+      scheduleStats()
+      scheduleAutosave()
+    },
+
+    redo: () => {
+      if (!redoStack.length) return
+      const next = redoStack.pop() as string
+      undoStack.push(get().currentContent)
+      pendingCaret = next.length
+      lastEditAt = 0
+      set({ currentContent: next, saved: false })
+      scheduleStats()
+      scheduleAutosave()
+    },
+
+    saveCurrent: async () => {
+      const { currentChapter, currentContent } = get()
+      if (!currentChapter) return
+      try {
+        const updated = await window.api.chapter.save({
+          chapterId: currentChapter.id,
+          content: currentContent
+        })
+        if (updated) {
+          set((s) => ({
+            currentChapter: updated,
+            saved: true,
+            saveError: null,
+            chapters: s.chapters.map((c) => (c.id === updated.id ? updated : c))
+          }))
+        }
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err)
+        set({ saved: false, saveError: message })
+      }
+    },
+
+    setDailyGoal: (goal) => {
+      const g = Math.max(0, Math.floor(goal) || 0)
+      set({ dailyGoal: g })
+      void window.api.settings.set('daily.goal', g)
+    },
+
+    toggleSidebar: () => set((s) => ({ sidebarVisible: !s.sidebarVisible })),
+    toggleAgentPanel: () => set((s) => ({ agentPanelVisible: !s.agentPanelVisible })),
+    toggleWritingMode: () => set((s) => ({ isWritingMode: !s.isWritingMode }))
+  }
+})

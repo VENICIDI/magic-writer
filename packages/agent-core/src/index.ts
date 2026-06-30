@@ -52,6 +52,8 @@ export interface RunAgentInput {
   input: string
   context?: AgentContext
   config?: Partial<LLMConfig>
+  /** 用于中断生成 */
+  signal?: AbortSignal
 }
 
 // ---------- 构造最终 messages ----------
@@ -91,7 +93,7 @@ export class AgentOrchestrator {
 
   async *run(input: RunAgentInput): AsyncIterable<LLMStreamEvent> {
     const messages = buildMessages(input)
-    yield* this.gateway.stream(messages, input.config)
+    yield* this.gateway.stream(messages, input.config, input.signal)
   }
 }
 

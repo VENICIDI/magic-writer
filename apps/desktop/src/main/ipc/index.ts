@@ -27,6 +27,8 @@ import {
   listChapters,
   listProjects,
   saveChapter,
+  listChapterBackups,
+  readChapterBackup,
   searchChapters,
   listCharacters,
   upsertCharacter,
@@ -191,6 +193,9 @@ export function registerIpcHandlers(): void {
   })
 
   // ---------- Agent（流式） ----------
+  // 每个进行中的请求维护一个 AbortController，供 AgentStop 中断。
+  const runningAborts = new Map<string, AbortController>()
+
   ipcMain.handle(IPC.AgentRun, async (event, req: AgentRunRequest) => {
     const senderWin = BrowserWindow.fromWebContents(event.sender)
     const send = (chunk: LLMStreamChunk): void => {
@@ -198,16 +203,43 @@ export function registerIpcHandlers(): void {
         senderWin.webContents.send(IPC.AgentStreamChunk, chunk)
       }
     }
+    const controller = new AbortController()
+    runningAborts.set(req.requestId, controller)
     try {
-      for await (const ev of runAgent(req)) {
+      for await (const ev of runAgent(req, controller.signal)) {
         send({ requestId: req.requestId, delta: ev.delta, done: ev.done })
         if (ev.done) break
       }
       return { requestId: req.requestId, ok: true }
     } catch (err) {
+      // 用户主动中断：作为正常结束，不抛中文错误
+      if (controller.signal.aborted || (err instanceof Error && err.name === 'AbortError')) {
+        send({ requestId: req.requestId, delta: '', done: true })
+        return { requestId: req.requestId, ok: true }
+      }
       const message = err instanceof Error ? err.message : String(err)
       send({ requestId: req.requestId, delta: '', done: true, error: message })
       return { requestId: req.requestId, ok: false, error: message }
+    } finally {
+      runningAborts.delete(req.requestId)
     }
+  })
+
+  ipcMain.handle(IPC.AgentStop, (_e, requestId: string) => {
+    const controller = runningAborts.get(requestId)
+    if (controller) {
+      controller.abort()
+      runningAborts.delete(requestId)
+      return { ok: true }
+    }
+    return { ok: false }
+  })
+
+  // ---------- 章节版本快照 ----------
+  ipcMain.handle('chapter:backups:list', (_e, chapterId: string) => {
+    return listChapterBackups(chapterId)
+  })
+  ipcMain.handle('chapter:backups:read', (_e, req: { chapterId: string; file: string }) => {
+    return { content: readChapterBackup(req.chapterId, req.file) }
   })
 }

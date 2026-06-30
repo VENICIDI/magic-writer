@@ -11,7 +11,11 @@ export interface LLMStreamEvent {
 
 export interface LLMProviderAdapter {
   readonly name: LLMProvider
-  stream(messages: AgentMessage[], config: LLMConfig): AsyncIterable<LLMStreamEvent>
+  stream(
+    messages: AgentMessage[],
+    config: LLMConfig,
+    signal?: AbortSignal
+  ): AsyncIterable<LLMStreamEvent>
 }
 
 // ---------- Mock Provider（离线可用，便于开发/测试） ----------
@@ -19,7 +23,11 @@ export interface LLMProviderAdapter {
 class MockProvider implements LLMProviderAdapter {
   readonly name: LLMProvider = 'mock'
 
-  async *stream(messages: AgentMessage[]): AsyncIterable<LLMStreamEvent> {
+  async *stream(
+    messages: AgentMessage[],
+    _config?: LLMConfig,
+    signal?: AbortSignal
+  ): AsyncIterable<LLMStreamEvent> {
     const last = messages[messages.length - 1]?.content ?? ''
     const reply =
       `（Mock 回复）你说的是："${last.slice(0, 40)}${last.length > 40 ? '…' : ''}"。\n\n` +
@@ -27,6 +35,10 @@ class MockProvider implements LLMProviderAdapter {
       '可以先用它验证流式渲染、IPC 链路、Agent 编排是否通畅。'
     // 伪流式：逐字吐出
     for (const ch of reply) {
+      if (signal?.aborted) {
+        yield { delta: '', done: true }
+        return
+      }
       await sleep(8)
       yield { delta: ch, done: false }
     }
@@ -41,13 +53,15 @@ class OpenAICompatibleProvider implements LLMProviderAdapter {
 
   async *stream(
     messages: AgentMessage[],
-    config: LLMConfig
+    config: LLMConfig,
+    signal?: AbortSignal
   ): AsyncIterable<LLMStreamEvent> {
     const url = (config.baseURL?.replace(/\/$/, '') ?? defaultBaseURL(config.provider)) +
       '/chat/completions'
 
     const res = await fetch(url, {
       method: 'POST',
+      signal,
       headers: {
         'Content-Type': 'application/json',
         ...(config.apiKey ? { Authorization: `Bearer ${config.apiKey}` } : {})
@@ -70,6 +84,11 @@ class OpenAICompatibleProvider implements LLMProviderAdapter {
     const decoder = new TextDecoder('utf-8')
     let buf = ''
     while (true) {
+      if (signal?.aborted) {
+        await reader.cancel().catch(() => {})
+        yield { delta: '', done: true }
+        return
+      }
       const { done, value } = await reader.read()
       if (done) break
       buf += decoder.decode(value, { stream: true })
@@ -143,14 +162,15 @@ export class LLMGateway {
 
   async *stream(
     messages: AgentMessage[],
-    config?: Partial<LLMConfig>
+    config?: Partial<LLMConfig>,
+    signal?: AbortSignal
   ): AsyncIterable<LLMStreamEvent> {
     const finalConfig: LLMConfig = { ...this.defaultConfig, ...config }
     const provider = this.providers.get(finalConfig.provider)
     if (!provider) {
       throw new Error(`Unknown LLM provider: ${finalConfig.provider}`)
     }
-    yield* provider.stream(messages, finalConfig)
+    yield* provider.stream(messages, finalConfig, signal)
   }
 }
 

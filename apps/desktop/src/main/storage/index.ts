@@ -5,15 +5,16 @@
  * - 元数据（项目/卷/章节/人物/伏笔）→ SQLite
  * - 章节正文 → Markdown 文件（保持可读性、版本控制友好）
  */
-import { readFileSync, writeFileSync, existsSync } from 'fs'
+import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync, unlinkSync } from 'fs'
 import { join } from 'path'
-import type {
-  Chapter,
-  Character,
-  Entity,
-  Foreshadowing,
-  Project,
-  Volume
+import {
+  countWords,
+  type Chapter,
+  type Character,
+  type Entity,
+  type Foreshadowing,
+  type Project,
+  type Volume
 } from '@magic-writer/shared'
 import { getDB, getDataDir } from './database'
 import { indexChapter } from '../agents/rag-engine'
@@ -162,6 +163,8 @@ export function saveChapter(chapterId: string, content: string): Chapter | null 
   if (!row) return null
 
   const filePath = join(getDataDir(), 'chapters', row.file_path)
+  // 写盘前先留一份历史快照，防误改/丢稿
+  writeChapterBackup(chapterId, content)
   writeFileSync(filePath, content, 'utf-8')
 
   const wordCount = countWords(content)
@@ -568,11 +571,64 @@ function safeJSON<T>(value: unknown, fallback: T): T {
 }
 
 // ============================================================
-// 工具
+// 章节版本快照（落盘备份，防误改/丢稿）
 // ============================================================
 
-function countWords(text: string): number {
-  const zh = (text.match(/[\u4e00-\u9fff]/g) ?? []).length
-  const en = (text.match(/[a-zA-Z]+/g) ?? []).length
-  return zh + en
+const MAX_BACKUPS_PER_CHAPTER = 20
+
+function backupDir(chapterId: string): string {
+  const dir = join(getDataDir(), 'backups', chapterId)
+  mkdirSync(dir, { recursive: true })
+  return dir
+}
+
+/** 保存章节前写一份带时间戳的快照，并仅保留最近 N 份 */
+function writeChapterBackup(chapterId: string, content: string): void {
+  try {
+    // 空内容不备份，避免覆盖型误删后快照也变空
+    if (!content.trim()) return
+    const dir = backupDir(chapterId)
+    const file = `${Date.now()}.txt`
+    writeFileSync(join(dir, file), content, 'utf-8')
+
+    const files = readdirSync(dir)
+      .filter((f) => f.endsWith('.txt'))
+      .sort()
+    const excess = files.length - MAX_BACKUPS_PER_CHAPTER
+    for (let i = 0; i < excess; i++) {
+      try {
+        unlinkSync(join(dir, files[i]))
+      } catch {
+        /* ignore */
+      }
+    }
+  } catch {
+    // 备份失败不阻塞正常保存
+  }
+}
+
+export function listChapterBackups(
+  chapterId: string
+): Array<{ file: string; createdAt: number }> {
+  try {
+    const dir = join(getDataDir(), 'backups', chapterId)
+    if (!existsSync(dir)) return []
+    return readdirSync(dir)
+      .filter((f) => f.endsWith('.txt'))
+      .map((f) => ({ file: f, createdAt: Number(f.replace('.txt', '')) || 0 }))
+      .sort((a, b) => b.createdAt - a.createdAt)
+  } catch {
+    return []
+  }
+}
+
+export function readChapterBackup(chapterId: string, file: string): string | null {
+  try {
+    // 防目录穿越：只接受纯文件名
+    if (file.includes('/') || file.includes('\\') || file.includes('..')) return null
+    const path = join(getDataDir(), 'backups', chapterId, file)
+    return existsSync(path) ? readFileSync(path, 'utf-8') : null
+  } catch {
+    return null
+  }
 }

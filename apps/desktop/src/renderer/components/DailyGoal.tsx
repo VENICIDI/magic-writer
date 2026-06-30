@@ -1,32 +1,46 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useProjectStore } from '../stores/project'
 import { IconCelebrate, IconSparkles } from './Icons'
 
 export function DailyGoal(): React.ReactElement {
   const dailyWordCount = useProjectStore((s) => s.dailyWordCount)
   const dailyGoal = useProjectStore((s) => s.dailyGoal)
+  const setDailyGoal = useProjectStore((s) => s.setDailyGoal)
   const [showCelebration, setShowCelebration] = useState(false)
   const [hasTriggered, setHasTriggered] = useState(false)
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft] = useState(String(dailyGoal))
+  const inputRef = useRef<HTMLInputElement>(null)
 
-  const progress = Math.min(dailyWordCount / dailyGoal, 1)
+  const progress = dailyGoal > 0 ? Math.min(dailyWordCount / dailyGoal, 1) : 0
   const percentage = Math.round(progress * 100)
 
-  // 触发庆祝动画
+  // 达标时触发庆祝；进度回落到目标以下时重置，便于次日/重写后再次触发
   useEffect(() => {
     if (progress >= 1 && !hasTriggered) {
       setShowCelebration(true)
       setHasTriggered(true)
       setTimeout(() => setShowCelebration(false), 3000)
+    } else if (progress < 1 && hasTriggered) {
+      setHasTriggered(false)
     }
   }, [progress, hasTriggered])
 
-  // 进度条颜色渐变
+  useEffect(() => {
+    if (editing) {
+      setDraft(String(dailyGoal))
+      setTimeout(() => inputRef.current?.select(), 30)
+    }
+  }, [editing, dailyGoal])
+
+  const commit = (): void => {
+    const n = parseInt(draft, 10)
+    if (!Number.isNaN(n) && n > 0) setDailyGoal(n)
+    setEditing(false)
+  }
+
   const barColor =
-    progress >= 1
-      ? 'bg-green-500'
-      : progress >= 0.6
-        ? 'bg-accent'
-        : 'bg-gray-500'
+    progress >= 1 ? 'bg-green-500' : progress >= 0.6 ? 'bg-accent' : 'bg-gray-500'
 
   return (
     <>
@@ -38,9 +52,33 @@ export function DailyGoal(): React.ReactElement {
             style={{ width: `${percentage}%` }}
           />
         </div>
-        <span className="text-sm text-gray-500">
-          {dailyWordCount.toLocaleString()} / {dailyGoal.toLocaleString()}
-        </span>
+        {editing ? (
+          <span className="text-sm text-gray-500">
+            {dailyWordCount.toLocaleString()} /{' '}
+            <input
+              ref={inputRef}
+              type="number"
+              min={500}
+              step={500}
+              className="w-16 rounded bg-surface-700 px-1 text-sm text-gray-200 outline-none"
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              onBlur={commit}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') commit()
+                else if (e.key === 'Escape') setEditing(false)
+              }}
+            />
+          </span>
+        ) : (
+          <button
+            className="text-sm text-gray-500 hover:text-gray-300"
+            onClick={() => setEditing(true)}
+            title="点击调整每日目标"
+          >
+            {dailyWordCount.toLocaleString()} / {dailyGoal.toLocaleString()}
+          </button>
+        )}
       </div>
 
       {/* 庆祝动画 */}

@@ -15,7 +15,8 @@ function getOrchestrator(): AgentOrchestrator {
 
 /** 供 IPC 层消费：给定请求，产出流式事件 */
 export async function* runAgent(
-  req: AgentRunRequest
+  req: AgentRunRequest,
+  signal?: AbortSignal
 ): AsyncIterable<LLMStreamEvent> {
   const context: AgentContext = {}
 
@@ -92,6 +93,7 @@ export async function* runAgent(
   yield* getOrchestrator().run({
     type: req.agentType,
     input: req.input,
-    context
+    context,
+    signal
   })
 }

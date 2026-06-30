@@ -59,11 +59,17 @@ const api = {
     rename: (req: { id: string; title: string }): Promise<Chapter | null> =>
       ipcRenderer.invoke('chapter:rename', req),
     search: (req: { projectId: string; query: string }): Promise<Array<{ chapterId: string; snippet: string }>> =>
-      ipcRenderer.invoke('chapter:search', req)
+      ipcRenderer.invoke('chapter:search', req),
+    listBackups: (chapterId: string): Promise<Array<{ file: string; createdAt: number }>> =>
+      ipcRenderer.invoke('chapter:backups:list', chapterId),
+    readBackup: (chapterId: string, file: string): Promise<{ content: string | null }> =>
+      ipcRenderer.invoke('chapter:backups:read', { chapterId, file })
   },
   agent: {
     run: (req: AgentRunRequest): Promise<AgentRunResponse> =>
       ipcRenderer.invoke(IPC.AgentRun, req),
+    stop: (requestId: string): Promise<{ ok: boolean }> =>
+      ipcRenderer.invoke(IPC.AgentStop, requestId),
     onStreamChunk: (handler: (chunk: LLMStreamChunk) => void): (() => void) => {
       const listener = (_e: unknown, chunk: LLMStreamChunk): void => handler(chunk)
       ipcRenderer.on(IPC.AgentStreamChunk, listener)

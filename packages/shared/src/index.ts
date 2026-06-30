@@ -187,6 +187,7 @@ export const IPC = {
 
   // Agent / LLM
   AgentRun: 'agent:run',
+  AgentStop: 'agent:stop', // renderer -> main，中断指定 requestId 的生成
   AgentStreamChunk: 'agent:stream-chunk', // main -> renderer
 
   // 系统
@@ -263,4 +264,40 @@ export interface RelationListRequest {
 
 export interface RelationDeleteRequest {
   id: string
+}
+
+// ---------- 通用工具 ----------
+
+/**
+ * 中文字数统计：中文按字、英文按词计。全工程统一使用此实现，
+ * 避免 store / 状态栏 / 存储层各写一份导致口径不一致。
+ */
+export function countWords(text: string): number {
+  const zh = (text.match(/[\u4e00-\u9fff]/g) ?? []).length
+  const en = (text.match(/[a-zA-Z]+/g) ?? []).length
+  return zh + en
+}
+
+/**
+ * 将 LLM 原始报错转为中文友好提示，并保留原始信息在次要位置，
+ * 方便用户排查（如鉴权失败引导去设置填 Key）。
+ */
+export function friendlyLLMError(raw: string): string {
+  const msg = raw || '未知错误'
+  let hint: string | null = null
+
+  if (/HTTP 401|HTTP 403|invalid api key|unauthorized/i.test(msg)) {
+    hint = 'AI 接口鉴权失败：请到「设置」检查 API Key 是否正确、是否已过期。'
+  } else if (/HTTP 404/.test(msg)) {
+    hint = '接口地址或模型不存在（404）：请检查「设置」里的 Base URL 与模型名称。'
+  } else if (/HTTP 429|rate limit|quota/i.test(msg)) {
+    hint = '请求过于频繁或额度不足（429）：请稍后再试，或检查账户额度。'
+  } else if (/HTTP 5\d\d/.test(msg)) {
+    hint = 'AI 服务暂时不可用（5xx）：请稍后重试。'
+  } else if (/fetch failed|failed to fetch|enotfound|econnrefused|etimedout|network|socket/i.test(msg)) {
+    hint = '网络连接失败：请检查网络，以及「设置」里的 Base URL 是否可访问。'
+  }
+
+  if (!hint) return msg
+  return `${hint}\n（原始信息：${msg}）`
 }
