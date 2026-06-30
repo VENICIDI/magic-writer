@@ -7,6 +7,7 @@ import { StatusBar } from './components/StatusBar'
 import { CommandPalette } from './components/CommandPalette'
 import { SettingsPanel } from './components/SettingsPanel'
 import { WorldviewAnalyzerView } from './components/WorldviewAnalyzerView'
+import { KnowledgeGraph } from './components/KnowledgeGraph'
 import { useProjectStore } from './stores/project'
 import { useAgentStore } from './stores/agent'
 import { useTheme } from './hooks/useTheme'
@@ -24,7 +25,9 @@ function App(): React.ReactElement {
   const ensureListener = useAgentStore((s) => s.ensureListener)
   const { theme, setTheme } = useTheme()
 
-  const [activePage, setActivePage] = useState<'library' | 'workspace' | 'worldview'>('library')
+  const [activePage, setActivePage] = useState<'library' | 'workspace' | 'worldview' | 'graph'>(
+    'library'
+  )
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
 
@@ -98,6 +101,28 @@ function App(): React.ReactElement {
           世界观分析
         </button>
 
+        {/* Tab: 图谱（仅有打开项目时显示） */}
+        {currentProject && (
+          <button
+            className={`titlebar-no-drag flex items-center gap-1.5 px-3 h-full text-sm border-r border-surface-600 transition-colors ${
+              activePage === 'graph'
+                ? 'bg-surface-900 text-gray-200'
+                : 'text-gray-500 hover:text-gray-300'
+            }`}
+            onClick={() => setActivePage('graph')}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="5" r="3" />
+              <circle cx="5" cy="19" r="3" />
+              <circle cx="19" cy="19" r="3" />
+              <path d="M12 8v4" />
+              <path d="m4.9 17.5 5.1-4" />
+              <path d="m14 13.5 5.1 4" />
+            </svg>
+            图谱
+          </button>
+        )}
+
         {/* Tab: 当前作品（仅有打开项目时显示） */}
         {currentProject && (
           <button
@@ -155,6 +180,8 @@ function App(): React.ReactElement {
           <LibraryView onEnterProject={() => setActivePage('workspace')} />
         ) : activePage === 'worldview' ? (
           <WorldviewAnalyzerView />
+        ) : activePage === 'graph' ? (
+          <KnowledgeGraph />
         ) : (
           <div className="flex flex-1 overflow-hidden">
             {!isWritingMode && sidebarVisible && <Sidebar />}

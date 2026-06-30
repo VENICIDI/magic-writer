@@ -21,7 +21,8 @@ const TYPE_LABEL: Record<EntityType, string> = {
   location: '地点',
   prop: '道具',
   foreshadowing: '伏笔',
-  chapter: '章节'
+  chapter: '章节',
+  storyline: '线索'
 }
 
 /** 各类型期望的 JSON 结构说明（写入 prompt） */

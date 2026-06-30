@@ -68,6 +68,9 @@ export type EntityType =
   | 'prop'
   | 'foreshadowing'
   | 'chapter'
+  // 线索/故事线：以统一实体形式存储，成员通过 entity_relations(type=STORYLINE_MEMBER_RELATION) 串联。
+  // 它不是图谱中的普通节点，而是用于高亮/过滤的「覆盖层」，故在按类型列实体的面板中需排除。
+  | 'storyline'
 
 export interface Entity<T extends Record<string, unknown> = Record<string, unknown>> {
   id: string
@@ -115,6 +118,40 @@ export interface PropData {
   owner?: string
   abilities?: string[]
 }
+
+export interface StorylineData {
+  // 线索在图谱中的高亮配色（hex），用于「全部线索」总览时区分不同故事线。
+  color?: string
+}
+
+/**
+ * 线索成员关系的固定 type 值：from=storyline 实体，to=成员实体。
+ * 该类型的关系仅用于线索归属，不应作为知识图谱的普通边渲染。
+ */
+export const STORYLINE_MEMBER_RELATION = 'includes'
+
+/**
+ * 知识图谱中用于「类型区分」的实体类型顺序（不含线索与章节由调用方决定是否纳入）。
+ * 章节作为可被引用的节点保留，线索始终排除在普通节点之外。
+ */
+export const GRAPH_ENTITY_TYPES: EntityType[] = [
+  'character',
+  'event',
+  'location',
+  'prop',
+  'foreshadowing',
+  'chapter'
+]
+
+/** 线索高亮的默认配色池（暖中性 + 冷调，避免与信号绿冲突）。 */
+export const STORYLINE_COLOR_POOL = [
+  '#4cb3d4',
+  '#c98fb0',
+  '#9d8ec9',
+  '#d4a24c',
+  '#7fb37f',
+  '#b8b3b0'
+]
 
 export type AgentType = 'outline' | 'writer' | 'polish' | 'review' | 'world'
 

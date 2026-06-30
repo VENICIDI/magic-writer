@@ -34,7 +34,8 @@ export function EntityForgePanel(): React.ReactElement {
   async function loadEntities(): Promise<void> {
     if (!currentProject) return
     const list = await window.api.entity.list(currentProject.id)
-    setEntities(list.filter((e) => e.type !== 'chapter'))
+    // 仅展示可由 AI 生成/管理的设定实体；排除章节与线索（线索属于「图谱」页的覆盖层）。
+    setEntities(list.filter((e) => e.type !== 'chapter' && e.type !== 'storyline'))
   }
 
   async function handleGenerate(type: EntityType): Promise<void> {
