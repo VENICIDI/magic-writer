@@ -152,6 +152,15 @@ export function Editor(): React.ReactElement {
       editorRef.current = editor
       monacoRef.current = monaco
 
+      // 选区变化实时同步到 agent store，供 AI 助手面板做选区感知（润色等需选区的模式）
+      const syncSelection = (): void => {
+        const sel = editor.getSelection()
+        const text = sel ? editor.getModel()?.getValueInRange(sel) ?? '' : ''
+        useAgentStore.getState().setSelectedText(text)
+      }
+      editor.onDidChangeCursorSelection(syncSelection)
+      syncSelection()
+
       // 右键润色菜单：选中文字后出现「润色/扩写/缩写/改写对话/去口水话」
       const items: Array<{ id: string; label: string; input: string }> = [
         { id: 'mw.polish', label: '润色', input: '润色这段文字' },

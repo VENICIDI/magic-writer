@@ -30,8 +30,11 @@ interface AgentState {
   running: boolean
   listenerInstalled: boolean
   currentRequestId: string | null
+  /** 编辑器中当前选中的正文（供面板做选区感知提示，由 Editor 实时同步） */
+  selectedText: string
 
   setActiveAgent: (a: AgentType) => void
+  setSelectedText: (t: string) => void
   ensureListener: () => void
   send: (input: {
     input: string
@@ -53,8 +56,10 @@ export const useAgentStore = create<AgentState>((set, get) => ({
   running: false,
   listenerInstalled: false,
   currentRequestId: null,
+  selectedText: '',
 
   setActiveAgent: (a) => set({ activeAgent: a }),
+  setSelectedText: (t) => set((s) => (s.selectedText === t ? s : { selectedText: t })),
 
   ensureListener: () => {
     if (get().listenerInstalled) return
