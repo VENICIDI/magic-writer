@@ -77,7 +77,7 @@ export function OutlinePanel(): React.ReactElement {
           onChange={(e) => setInputText(e.target.value)}
         />
         <button
-          className="mt-2 w-full rounded-lg bg-accent py-1.5 text-xs text-white hover:bg-accent-80 disabled:opacity-50"
+          className="mt-2 w-full rounded-lg bg-accent py-1.5 text-xs text-on-accent hover:bg-accent-80 disabled:opacity-50"
           onClick={handleGenerate}
           disabled={running}
         >

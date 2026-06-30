@@ -353,14 +353,15 @@ type AppView = 'editor' | 'world' | 'outline' | 'settings' | 'analytics'
 @import "tailwindcss";
 
 @theme {
-  --color-surface-900: #0a0a12;
-  --color-surface-800: #0f0f1a;
-  --color-surface-700: #161625;
-  --color-surface-600: #1e1e30;
-  --color-surface-500: #2a2a3d;
-  --color-accent: #7c3aed;
-  --color-accent-light: #a78bfa;
+  --color-surface-900: #050507; /* Abyss Black */
+  --color-surface-800: #0b0b0c;
+  --color-surface-700: #101010; /* Carbon Surface */
+  --color-surface-600: #3d3a39; /* Warm Charcoal */
+  --color-surface-500: #4f4b49;
+  --color-accent: #00d992;      /* Emerald Signal Green */
+  --color-accent-light: #2fd6a1;/* VoltAgent Mint */
   --font-sans: 'Inter', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --font-mono: 'SFMono-Regular', 'JetBrains Mono', Menlo, Monaco, Consolas, monospace;
 }
 ```
 

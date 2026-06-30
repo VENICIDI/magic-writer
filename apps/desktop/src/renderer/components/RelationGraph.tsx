@@ -94,8 +94,8 @@ export function RelationGraph(): React.ReactElement {
               source: char.id,
               target: rel.targetId,
               label: rel.type || rel.note,
-              style: { stroke: '#7c3aed', strokeWidth: 1.5 },
-              labelStyle: { fill: '#94a3b8', fontSize: 10 },
+              style: { stroke: '#00d992', strokeWidth: 1.5 },
+              labelStyle: { fill: '#8b949e', fontSize: 10 },
               type: 'default'
             })
           }
@@ -140,12 +140,12 @@ export function RelationGraph(): React.ReactElement {
         fitView
         attributionPosition="bottom-left"
         proOptions={{ hideAttribution: true }}
-        style={{ background: '#111113' }}
+        style={{ background: '#050507' }}
       >
-        <Background color="#303033" gap={20} />
+        <Background color="#3d3a39" gap={20} />
         <Controls
           showInteractive={false}
-          style={{ background: '#222225', borderColor: '#303033' }}
+          style={{ background: '#101010', borderColor: '#3d3a39' }}
         />
       </ReactFlow>
     </div>

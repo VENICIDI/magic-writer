@@ -229,7 +229,7 @@ export function SettingsPanel({ open, onClose, theme, onThemeChange }: SettingsP
             取消
           </button>
           <button
-            className="rounded-lg bg-accent px-4 py-1.5 text-xs text-white hover:bg-accent-80 disabled:opacity-50"
+            className="rounded-lg bg-accent px-4 py-1.5 text-xs text-on-accent hover:bg-accent-80 disabled:opacity-50"
             onClick={handleSave}
             disabled={saving}
           >

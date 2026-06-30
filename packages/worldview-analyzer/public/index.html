@@ -6,17 +6,18 @@
   <title>小说分析 · 主线 / 世界观 / 角色 / 物品</title>
   <style>
     :root {
-      --bg: #0f1117;
-      --surface: #1a1d27;
-      --surface2: #242836;
-      --border: #2e3345;
-      --text: #e8eaef;
-      --muted: #8b92a8;
-      --accent: #6c8cff;
-      --accent2: #4fd1a5;
-      --warn: #f6ad55;
-      --danger: #fc8181;
-      --radius: 10px;
+      /* VoltAgent 设计语言：碳黑底 + 翡翠信号绿 */
+      --bg: #050507;          /* Abyss Black */
+      --surface: #101010;     /* Carbon Surface */
+      --surface2: #1a1a1a;    /* 抬升一档的容器 */
+      --border: #3d3a39;      /* Warm Charcoal */
+      --text: #f2f2f2;        /* Snow White */
+      --muted: #8b949e;       /* Steel Slate */
+      --accent: #00d992;      /* Emerald Signal Green */
+      --accent2: #2fd6a1;     /* VoltAgent Mint */
+      --warn: #ffba00;        /* Warning Amber */
+      --danger: #fb565b;      /* Danger Coral */
+      --radius: 8px;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -84,7 +85,7 @@
     }
     button:hover { opacity: 0.88; }
     button:disabled { opacity: 0.45; cursor: not-allowed; }
-    .btn-primary { background: var(--accent); color: #fff; width: 100%; }
+    .btn-primary { background: var(--accent); color: #050507; width: 100%; }
     .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
     .btn-danger { background: transparent; color: var(--danger); border: 1px solid var(--danger); font-size: 0.8rem; padding: 4px 10px; }
     .job-list { list-style: none; }
@@ -165,7 +166,7 @@
       border: 1px solid var(--border);
       font-size: 0.85rem;
     }
-    .tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .tab.active { background: var(--accent); color: #050507; border-color: var(--accent); }
     .tag-list { display: flex; flex-wrap: wrap; gap: 6px; }
     .tag {
       background: var(--surface2);
@@ -276,11 +277,11 @@
       font-size: 0.7rem;
       padding: 2px 8px;
       border-radius: 12px;
-      background: rgba(108, 140, 255, 0.15);
+      background: rgba(0, 217, 146, 0.15);
       color: var(--accent);
       margin-bottom: 8px;
     }
-    .entity-card .badge.item { background: rgba(79, 209, 165, 0.15); color: var(--accent2); }
+    .entity-card .badge.item { background: rgba(47, 214, 161, 0.15); color: var(--accent2); }
     .entity-card .desc {
       font-size: 0.8rem;
       color: var(--muted);
@@ -337,11 +338,11 @@
       font-size: 0.75rem;
       padding: 3px 10px;
       border-radius: 12px;
-      background: rgba(108, 140, 255, 0.15);
+      background: rgba(0, 217, 146, 0.15);
       color: var(--accent);
       margin-bottom: 14px;
     }
-    .modal .role-badge.item { background: rgba(79, 209, 165, 0.15); color: var(--accent2); }
+    .modal .role-badge.item { background: rgba(47, 214, 161, 0.15); color: var(--accent2); }
     .modal-section { margin-bottom: 14px; }
     .modal-section h4 {
       font-size: 0.75rem;
@@ -369,7 +370,7 @@
       font-family: inherit;
       cursor: pointer;
     }
-    .chip.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .chip.active { background: var(--accent); color: #050507; border-color: var(--accent); }
     .section-block { margin-bottom: 18px; }
     .section-block h3 {
       font-size: 0.85rem;

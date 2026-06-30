@@ -9,32 +9,40 @@
   font-display: swap;
 }
 
-/* ===== 深色主题（默认） ===== */
+/* ===== 深色主题（默认） · VoltAgent 设计语言 ===== */
 @theme {
-  --color-surface-900: #111113;
-  --color-surface-800: #18181b;
-  --color-surface-700: #222225;
-  --color-surface-600: #303033;
-  --color-surface-500: #3f3f44;
-  --color-accent: #7c3aed;
-  --color-accent-light: #a78bfa;
+  --color-surface-900: #050507; /* Abyss Black — 页面/编辑区底色 */
+  --color-surface-800: #0b0b0c; /* 侧栏/标题栏（介于 Abyss 与 Carbon 之间） */
+  --color-surface-700: #101010; /* Carbon Surface — 卡片/输入框背景 */
+  --color-surface-600: #3d3a39; /* Warm Charcoal — 边框/分隔线/hover 容器线 */
+  --color-surface-500: #4f4b49; /* 加重边框/disabled */
+  --color-accent: #00d992;      /* Emerald Signal Green — 品牌强调 */
+  --color-accent-light: #2fd6a1;/* VoltAgent Mint — 深色面上的强调文字/链接 */
   --font-sans: 'Inter', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --font-mono: 'SFMono-Regular', 'JetBrains Mono', Menlo, Monaco, Consolas, monospace;
 }
 
 :root {
-  --th-text-primary: #e4e4e7;
+  --th-text-primary: #f2f2f2; /* Snow White */
+  --th-on-accent: #050507;    /* 亮绿背景上的文字（深色） */
 }
 
-/* ===== 浅色主题覆盖 ===== */
+/* ===== 浅色主题覆盖（绿色强调保持一致，仅明度反转） ===== */
 [data-theme="light"] {
   --color-surface-900: #ffffff;
-  --color-surface-800: #f4f4f5;
-  --color-surface-700: #ececee;
-  --color-surface-600: #d4d4d8;
-  --color-surface-500: #a1a1aa;
-  --color-accent: #3b5eeb;
-  --color-accent-light: #2f4fd6;
-  --th-text-primary: #18181b;
+  --color-surface-800: #f5f4f3;
+  --color-surface-700: #eceae8;
+  --color-surface-600: #d8d4d1;
+  --color-surface-500: #b0aba7;
+  --color-accent: #00b87d;
+  --color-accent-light: #059669;
+  --th-text-primary: #1a1a1a;
+  --th-on-accent: #ffffff;
+}
+
+/* 亮绿强调背景上的可读文字色（随主题切换） */
+.text-on-accent {
+  color: var(--th-on-accent);
 }
 
 body {
@@ -109,4 +117,12 @@ body {
 }
 .hover\:bg-accent-80:hover {
   background-color: color-mix(in srgb, var(--color-accent) 80%, transparent);
+}
+
+/* ===== VoltAgent 招牌：翡翠绿信号辉光 ===== */
+.glow-accent {
+  filter: drop-shadow(0 0 4px color-mix(in srgb, var(--color-accent) 60%, transparent));
+}
+.shadow-accent-glow {
+  box-shadow: 0 0 16px color-mix(in srgb, var(--color-accent) 22%, transparent);
 }

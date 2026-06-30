@@ -112,7 +112,7 @@ export function CreateProjectModal({ open, onClose, onSubmit }: CreateProjectMod
             取消
           </button>
           <button
-            className="rounded-lg bg-accent px-5 py-2 text-xs font-medium text-white hover:bg-accent-80 disabled:opacity-50"
+            className="rounded-lg bg-accent px-5 py-2 text-xs font-medium text-on-accent hover:bg-accent-80 disabled:opacity-50"
             onClick={handleSubmit}
             disabled={!title.trim()}
           >

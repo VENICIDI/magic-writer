@@ -66,7 +66,7 @@ export function InputModal({ open, title, placeholder, defaultValue, onConfirm, 
             取消
           </button>
           <button
-            className="rounded-lg bg-accent px-4 py-1.5 text-xs text-white hover:bg-accent-80 disabled:opacity-50"
+            className="rounded-lg bg-accent px-4 py-1.5 text-xs text-on-accent hover:bg-accent-80 disabled:opacity-50"
             onClick={handleSubmit}
             disabled={!value.trim()}
           >

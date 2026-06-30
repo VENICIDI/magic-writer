@@ -87,7 +87,7 @@ export function ForeshadowingPanel(): React.ReactElement {
           />
           <div className="flex gap-2">
             <button
-              className="rounded bg-accent px-2 py-1 text-xs text-white hover:bg-accent-80"
+              className="rounded bg-accent px-2 py-1 text-xs text-on-accent hover:bg-accent-80"
               onClick={handleAdd}
             >
               添加

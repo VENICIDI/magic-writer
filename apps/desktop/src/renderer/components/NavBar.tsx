@@ -54,7 +54,7 @@ export function NavBar({ activePage, onNavigate, onOpenSettings, projectTitle }:
     <div className="flex w-40 shrink-0 flex-col border-r border-surface-600 bg-surface-800">
       {/* ===== Logo 区域 ===== */}
       <div className="flex items-center gap-2 px-4 py-4 border-b border-surface-600">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent-20">
+        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent-20 text-accent-light shadow-accent-glow">
           <IconPen size={16} />
         </div>
         <div className="min-w-0 flex-1">

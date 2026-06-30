@@ -1,8 +1,9 @@
 # Magic Writer — 设计规范文档 (Design System)
 
-> 版本：v1.0 · 更新日期：2026-05-03
+> 版本：v2.0（VoltAgent 视觉语言）· 更新日期：2026-06-30
 > 配套产品文档：[`docs/PRD.md`](./PRD.md)
 > 配套技术设计：[`docs/design.md`](./design.md)
+> 视觉语言来源：[`.cursor/skills/voltagent-design/`](../.cursor/skills/voltagent-design/DESIGN.md)（碳黑底 + 翡翠信号绿的开发者终端美学，可作为 AI 生成 UI 的调用技能）
 
 ---
 
@@ -21,17 +22,17 @@
 ### 1.2 情感基调
 
 ```
-                    宁静         专注         温暖
+                    专注         信号         温暖
                      │           │           │
                      ▼           ▼           ▼
               ┌──────────────────────────────────────┐
-              │     深邃星空 × 墨水质感 × 微光点缀    │
+              │     碳黑画布 × 翡翠微光 × 暖灰边框    │
               │     ─────────────────────────────     │
-              │     像在一间暗色书房里，台灯照亮稿纸   │
+              │     像深夜 IDE 里，唯一亮着的绿色信号  │
               └──────────────────────────────────────┘
 ```
 
-**品牌气质**：不是冰冷的代码编辑器，也不是花哨的笔记应用。是一间深夜书房——安静、沉浸、有温度。
+**品牌气质**：深夜书房的沉静，叠加工程终端的精确。近纯黑画布上只有一束翡翠信号绿在呼吸——专注、沉浸、有温度，但不冰冷。绿色是「power on」的隐喻，暖灰中性色让深色不显得临床般冷峻。
 
 ---
 
@@ -39,36 +40,41 @@
 
 ### 2.1 主色板（深色模式 · 默认）
 
-| Token | 色值 | 用途 |
-|---|---|---|
-| `surface-900` | `#0a0a12` | 主背景、编辑区底色 |
-| `surface-800` | `#0f0f1a` | 侧栏底色、标题栏 |
-| `surface-700` | `#161625` | 输入框底色、卡片背景 |
-| `surface-600` | `#1e1e30` | 分隔线、hover 态 |
-| `surface-500` | `#2a2a3d` | disabled 态、次要边框 |
-| `accent` | `#7c3aed` | 主强调色（按钮、高亮） |
-| `accent-light` | `#a78bfa` | 选中态、链接、光标 |
-| `text-primary` | `#e2e8f0` | 正文文字 |
-| `text-secondary` | `#94a3b8` | 次要文字 |
-| `text-muted` | `#64748b` | 提示文字、placeholder |
-| `success` | `#22c55e` | 保存成功、目标达成 |
-| `warning` | `#f59e0b` | 未保存、注意提醒 |
-| `error` | `#ef4444` | 错误、冲突 |
-| `info` | `#3b82f6` | 信息提示 |
+| Token | 色值 | VoltAgent 名称 | 用途 |
+|---|---|---|---|
+| `surface-900` | `#050507` | Abyss Black | 主背景、编辑区底色 |
+| `surface-800` | `#0b0b0c` | — | 侧栏底色、标题栏 |
+| `surface-700` | `#101010` | Carbon Surface | 输入框底色、卡片背景 |
+| `surface-600` | `#3d3a39` | Warm Charcoal | 边框、分隔线、hover 容器线 |
+| `surface-500` | `#4f4b49` | — | 加重边框、disabled |
+| `accent` | `#00d992` | Emerald Signal Green | 主强调色（激活边框、辉光、高信号交互） |
+| `accent-light` | `#2fd6a1` | VoltAgent Mint | 深色面上的强调文字、链接、光标 |
+| `text-primary` | `#f2f2f2` | Snow White | 正文文字 |
+| `text-secondary` | `#b8b3b0` | Warm Parchment | 次要文字 |
+| `text-muted` | `#8b949e` | Steel Slate | 提示文字、placeholder、元数据 |
+| `on-accent` | `#050507` | — | 亮绿背景上的文字（深色，保证可读） |
+| `success` | `#008b00` | Success Emerald | 保存成功、目标达成 |
+| `warning` | `#ffba00` | Warning Amber | 未保存、注意提醒 |
+| `error` | `#fb565b` | Danger Coral | 错误、冲突 |
+| `info` | `#4cb3d4` | Info Teal | 信息提示 |
+
+> 核心规则：**绿是信号，不是表面**。`#00d992` 只用于高信号点（激活边框、辉光、最重要的交互），绝不做大面积填充背景；亮绿背景上的文字一律用深色 `on-accent`，不用白色。
 
 ### 2.2 语义色彩映射
 
 ```
 ┌─────────────────────────────────────────────┐
-│ Agent 类型色彩                                │
+│ Agent 类型色彩（统一在翡翠绿家族 + 暖中性）   │
 ├─────────────┬───────────────────────────────┤
-│ Writer 续写 │ accent (#7c3aed)              │
-│ Polish 润色 │ emerald (#10b981)             │
-│ Review 审校 │ amber (#f59e0b)               │
-│ Outline 大纲│ sky (#0ea5e9)                 │
-│ World 世界观│ rose (#f43f5e)                │
+│ Writer 续写 │ accent (#00d992) 翡翠信号绿   │
+│ Polish 润色 │ mint   (#2fd6a1) VoltAgent Mint│
+│ Review 审校 │ amber  (#ffba00) Warning Amber│
+│ Outline 大纲│ teal   (#4cb3d4) Info Teal    │
+│ World 世界观│ purple (#818cf8) Soft Purple  │
 └─────────────┴───────────────────────────────┘
 ```
+
+> 续写/润色同属绿色家族（信号绿 vs 薄荷绿），靠明度区分；审校/大纲/世界观借用语义与点缀色，避免引入与品牌冲突的暖色装饰。
 
 ### 2.3 对比度要求
 
@@ -88,9 +94,11 @@
 
 | 层级 | 字体栈 | 场景 |
 |---|---|---|
-| **编辑器正文** | `'LXGW WenKai', 'Noto Serif SC', 'PingFang SC', serif` | Monaco 内的写作字体 |
-| **UI 界面** | `'Inter', 'PingFang SC', 'Microsoft YaHei', sans-serif` | 侧栏、面板、按钮 |
-| **代码/等宽** | `'JetBrains Mono', 'Fira Code', monospace` | 设置项、JSON 大纲 |
+| **编辑器正文** | `'LXGW WenKai', 'Noto Serif SC', 'PingFang SC', serif` | 写作正文（中文长文阅读舒适，刻意保留） |
+| **UI 界面** | `'Inter', 'PingFang SC', 'Microsoft YaHei', sans-serif` | 侧栏、面板、按钮、对话 |
+| **代码/等宽** | `'SFMono-Regular', 'JetBrains Mono', Menlo, Monaco, Consolas, monospace` | 设置项、JSON 大纲、命令块（开发者信誉信号） |
+
+> VoltAgent 原始体系用 `system-ui` 承载标题、`Inter` 承载正文/UI、`SFMono-Regular` 承载代码。Magic Writer 是中文小说工具，**写作正文沿用 LXGW WenKai**（阅读体验优先），其余 UI/代码遵循 VoltAgent 字体策略；等宽字体已统一为 `--font-mono`（见 `App.css`）。
 
 ### 3.2 字号体系
 
@@ -180,7 +188,7 @@ lineHeight: 32,    // 更宽松，沉浸感
 - 编辑区居中，最大栏宽 680px
 - 顶部 / 底部各留 `20vh` 呼吸空间
 - 底部浮动：半透明字数进度条
-- 背景纯黑 `#0a0a12`
+- 背景碳黑 `#050507`（Abyss Black）
 
 ### 4.4 响应式策略
 
@@ -332,8 +340,8 @@ lineHeight: 32,    // 更宽松，沉浸感
 
 ### 6.1 产品 Logo
 
-- 概念：**羽毛笔 + 魔法粒子 + 星光轨迹**
-- 主色调：`accent (#7c3aed)` 紫色渐变至 `accent-light (#a78bfa)`
+- 概念：**羽毛笔 + 翡翠信号 + 电路微光**（呼应 VoltAgent 的「power on」辉光）
+- 主色调：`accent (#00d992)` 信号绿渐变至 `accent-light (#2fd6a1)`，可加 `drop-shadow(0 0 2–8px #00d992)` 脉冲辉光
 - 应用于：窗口图标、启动画面、关于页面
 - 尺寸要求：16×16 / 32×32 / 64×64 / 128×128 / 512×512 / 1024×1024
 

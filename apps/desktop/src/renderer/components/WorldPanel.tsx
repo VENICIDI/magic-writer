@@ -201,7 +201,7 @@ function CharacterForm({
             取消
           </button>
           <button
-            className="rounded bg-accent px-2 py-1 text-xs text-white hover:bg-accent-80"
+            className="rounded bg-accent px-2 py-1 text-xs text-on-accent hover:bg-accent-80"
             onClick={() => onSave(form)}
           >
             保存

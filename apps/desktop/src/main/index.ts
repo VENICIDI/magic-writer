@@ -17,7 +17,7 @@ function createWindow(): void {
     title: 'Magic Writer',
     titleBarStyle: 'hiddenInset',
     trafficLightPosition: { x: 12, y: 10 },
-    backgroundColor: '#111113',
+    backgroundColor: '#050507',
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       sandbox: false
