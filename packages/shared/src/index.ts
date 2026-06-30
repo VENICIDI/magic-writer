@@ -178,6 +178,7 @@ export const IPC = {
   EntityGet: 'entity:get',
   EntityUpsert: 'entity:upsert',
   EntityDelete: 'entity:delete',
+  EntityGenerate: 'entity:generate',
 
   // 统一关系
   RelationList: 'relation:list',
@@ -239,6 +240,20 @@ export interface EntityListRequest {
 
 export interface EntityDeleteRequest {
   id: string
+}
+
+// AI 随机生成实体（角色/道具/地点/事件/伏笔）
+export interface EntityGenerateRequest {
+  projectId: string
+  type: EntityType
+  // 可选：用户的额外要求/方向（如「一个反派老者」）
+  hint?: string
+}
+
+export interface EntityGenerateResponse {
+  ok: boolean
+  entity?: Entity
+  error?: string
 }
 
 export interface RelationListRequest {

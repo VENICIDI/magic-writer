@@ -3,11 +3,12 @@ import { useProjectStore } from '../stores/project'
 import { WorldPanel } from './WorldPanel'
 import { ForeshadowingPanel } from './ForeshadowingPanel'
 import { OutlinePanel } from './OutlinePanel'
+import { EntityForgePanel } from './EntityForgePanel'
 import { ContextMenu, type MenuItem } from './ContextMenu'
 import { InputModal } from './InputModal'
-import { IconBook, IconGlobe, IconTarget, IconOutline } from './Icons'
+import { IconBook, IconGlobe, IconTarget, IconOutline, IconWand } from './Icons'
 
-type InnerTab = 'chapters' | 'world' | 'foreshadowing' | 'outline'
+type InnerTab = 'chapters' | 'world' | 'foreshadowing' | 'outline' | 'forge'
 
 interface MenuState { x: number; y: number; items: MenuItem[] }
 
@@ -140,7 +141,8 @@ export function Sidebar(): React.ReactElement {
     { id: 'chapters', icon: <IconBook size={20} />, title: '章节' },
     { id: 'outline', icon: <IconOutline size={20} />, title: '大纲' },
     { id: 'world', icon: <IconGlobe size={20} />, title: '世界观' },
-    { id: 'foreshadowing', icon: <IconTarget size={20} />, title: '伏笔' }
+    { id: 'foreshadowing', icon: <IconTarget size={20} />, title: '伏笔' },
+    { id: 'forge', icon: <IconWand size={20} />, title: 'AI 百宝箱' }
   ]
 
   return (
@@ -171,6 +173,8 @@ export function Sidebar(): React.ReactElement {
           <ForeshadowingPanel />
         ) : activeTab === 'outline' ? (
           <OutlinePanel />
+        ) : activeTab === 'forge' ? (
+          <EntityForgePanel />
         ) : (
           <>
             {/* 作品信息 */}

@@ -8,6 +8,7 @@ import {
   type Character,
   type ChapterSaveRequest,
   type Entity,
+  type EntityGenerateResponse,
   type EntityRelation,
   type EntityType,
   type LLMStreamChunk,
@@ -85,7 +86,13 @@ const api = {
       entity: Partial<Entity> & { projectId: string; type: EntityType }
     ): Promise<Entity> => ipcRenderer.invoke(IPC.EntityUpsert, entity),
     delete: (id: string): Promise<{ ok: boolean }> =>
-      ipcRenderer.invoke(IPC.EntityDelete, { id })
+      ipcRenderer.invoke(IPC.EntityDelete, { id }),
+    generate: (
+      projectId: string,
+      type: EntityType,
+      hint?: string
+    ): Promise<EntityGenerateResponse> =>
+      ipcRenderer.invoke(IPC.EntityGenerate, { projectId, type, hint })
   },
   relation: {
     list: (projectId: string, entityId?: string): Promise<EntityRelation[]> =>

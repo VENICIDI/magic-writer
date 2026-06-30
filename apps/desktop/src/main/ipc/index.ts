@@ -6,6 +6,7 @@ import {
   type Entity,
   type EntityListRequest,
   type EntityDeleteRequest,
+  type EntityGenerateRequest,
   type EntityRelation,
   type LLMStreamChunk,
   type ProjectCreateRequest,
@@ -43,6 +44,7 @@ import {
   setSetting
 } from '../storage'
 import { runAgent } from '../agents'
+import { generateEntity } from '../agents/entity-generator'
 import { getWorldviewUrl } from '../worldview/service'
 
 export function registerIpcHandlers(): void {
@@ -139,6 +141,15 @@ export function registerIpcHandlers(): void {
   ipcMain.handle(IPC.EntityDelete, (_e, req: EntityDeleteRequest) => {
     deleteEntity(req.id)
     return { ok: true }
+  })
+  ipcMain.handle(IPC.EntityGenerate, async (_e, req: EntityGenerateRequest) => {
+    try {
+      const entity = await generateEntity(req.projectId, req.type, req.hint)
+      return { ok: true, entity }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      return { ok: false, error: message }
+    }
   })
 
   // ---------- 统一关系 ----------

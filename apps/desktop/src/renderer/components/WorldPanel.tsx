@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import type { Character } from '@magic-writer/shared'
 import { useProjectStore } from '../stores/project'
 import { RelationGraph } from './RelationGraph'
-import { IconGlobe, IconNetwork, IconLock, IconUnlock, IconPlus, IconArrowLeft } from './Icons'
+import { IconGlobe, IconNetwork, IconLock, IconUnlock, IconPlus, IconArrowLeft, IconWand } from './Icons'
 
 export function WorldPanel(): React.ReactElement {
   const currentProject = useProjectStore((s) => s.currentProject)
@@ -10,6 +10,7 @@ export function WorldPanel(): React.ReactElement {
   const [editing, setEditing] = useState<Character | null>(null)
   const [showForm, setShowForm] = useState(false)
   const [view, setView] = useState<'list' | 'graph'>('list')
+  const [generating, setGenerating] = useState(false)
 
   useEffect(() => {
     if (!currentProject) return
@@ -55,6 +56,17 @@ export function WorldPanel(): React.ReactElement {
     setShowForm(true)
   }
 
+  async function handleAIGenerate(): Promise<void> {
+    if (!currentProject || generating) return
+    setGenerating(true)
+    try {
+      await window.api.entity.generate(currentProject.id, 'character')
+      await loadCharacters()
+    } finally {
+      setGenerating(false)
+    }
+  }
+
   if (showForm && editing) {
     return (
       <CharacterForm
@@ -97,8 +109,17 @@ export function WorldPanel(): React.ReactElement {
             <IconNetwork size={12} />
           </button>
           <button
+            className="rounded px-2 py-1 text-xs text-accent-light hover:bg-surface-600 disabled:opacity-50"
+            onClick={() => void handleAIGenerate()}
+            disabled={generating}
+            title="AI 随机生成角色"
+          >
+            <IconWand size={12} className={generating ? 'animate-pulse' : ''} />
+          </button>
+          <button
             className="rounded px-2 py-1 text-xs text-accent-light hover:bg-surface-600"
             onClick={handleNew}
+            title="新建人物"
           >
             <IconPlus size={12} />
           </button>
