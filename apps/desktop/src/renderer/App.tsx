@@ -67,8 +67,10 @@ function App(): React.ReactElement {
     <div className="flex h-screen flex-col bg-surface-900 text-gray-200">
       {/* ===== 顶部 Tab Bar（模仿参考图：作品库 tab + 当前作品 tab）===== */}
       <div className="titlebar-drag flex h-10 shrink-0 items-center border-b border-surface-600 bg-surface-800">
-        {/* macOS traffic lights 占位 */}
-        <div className="w-[72px] shrink-0" />
+        {/* macOS traffic lights 占位（仅 macOS 显示） */}
+        {window.api?.platform === 'darwin' && (
+          <div className="w-[72px] shrink-0" />
+        )}
 
         {/* Tab: 作品库 */}
         <button

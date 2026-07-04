@@ -21,6 +21,7 @@ import {
 // ---------- 暴露给 renderer 的 API ----------
 
 const api = {
+  platform: process.platform,
   app: {
     version: (): Promise<string> => ipcRenderer.invoke(IPC.AppVersion)
   },
